@@ -1,0 +1,37 @@
+<div class="modal-body">
+  <div class="row g-3">
+    <div class="col-12">
+      <label class="form-label">Question <span style="color:#EF4444">*</span></label>
+      <textarea name="question" class="form-control" rows="2" required placeholder="Ex: L'hôtel dispose-t-il d'une piscine ?"></textarea>
+    </div>
+    <div class="col-12">
+      <label class="form-label">Réponse <span style="color:#EF4444">*</span></label>
+      <textarea name="answer" class="form-control" rows="4" required placeholder="Réponse complète à afficher..."></textarea>
+    </div>
+    <div class="col-12">
+      <label class="form-label">Liste à puces <span style="color:#9CA3AF;font-size:.75rem">(optionnel)</span></label>
+      <textarea name="answer_items" class="form-control" rows="4" placeholder="Une entrée par ligne :&#10;- Continental&#10;- Buffet marocain"></textarea>
+      <div class="form-text">Chaque ligne sera affichée comme un point de liste.</div>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Catégorie</label>
+      <select name="category" class="form-select">
+        {% for v,l in categories %}<option value="{{ v }}">{{ l }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Ordre</label>
+      <input type="number" name="order" class="form-control" value="0" min="0">
+    </div>
+    <div class="col-6">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px;background:#F9FAFB;border-radius:8px;border:1px solid #E5E7EB;font-size:.83rem">
+        <input type="checkbox" name="is_active" checked style="width:16px;height:16px;accent-color:#10B981"> Actif sur le site
+      </label>
+    </div>
+    <div class="col-6">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px;background:#F9FAFB;border-radius:8px;border:1px solid #E5E7EB;font-size:.83rem">
+        <input type="checkbox" name="is_featured" checked style="width:16px;height:16px;accent-color:#C9A96E"> ★ Sur l'accueil
+      </label>
+    </div>
+  </div>
+</div>

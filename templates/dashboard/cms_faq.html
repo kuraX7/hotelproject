@@ -1,0 +1,192 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}FAQ{% endblock %}
+{% block page_title %}FAQ — Questions fréquentes{% endblock %}
+{% block page_subtitle %}{{ faqs|length }} question{{ faqs|length|pluralize }}{% endblock %}
+{% block topbar_actions %}
+<button class="topbar-btn primary" onclick="document.getElementById('addModal').style.display='flex'">
+  <i class="fas fa-plus"></i> Ajouter une question
+</button>
+<a href="{% url 'faq_page' %}" target="_blank" class="topbar-btn">
+  <i class="fas fa-eye me-1"></i> Voir sur le site
+</a>
+{% endblock %}
+
+{% block content %}
+<style>
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;align-items:center;justify-content:center;padding:16px}
+.modal-box{background:#fff;border-radius:16px;width:100%;max-width:620px;max-height:92vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.3)}
+.modal-head{padding:18px 24px;border-bottom:1px solid #F3F4F6;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;z-index:1;border-radius:16px 16px 0 0}
+.modal-body{padding:20px 24px}
+.modal-foot{padding:16px 24px;border-top:1px solid #F3F4F6;display:flex;gap:10px;justify-content:flex-end;position:sticky;bottom:0;background:#fff}
+.close-btn{background:none;border:none;font-size:1.5rem;cursor:pointer;color:#9CA3AF;line-height:1}
+.close-btn:hover{color:#111}
+</style>
+
+<!-- FAQ table -->
+<div class="data-card">
+  <div class="data-card-header">
+    <div class="data-card-title"><i class="fas fa-question-circle"></i> Liste des questions</div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <select id="catFilter" class="form-select form-select-sm" style="font-size:.78rem;border-radius:20px;min-width:140px" onchange="filterTable(this.value)">
+        <option value="">Toutes les catégories</option>
+        {% for v,l in categories %}<option value="{{ v }}">{{ l }}</option>{% endfor %}
+      </select>
+    </div>
+  </div>
+
+  {% if faqs %}
+  <div class="table-responsive">
+    <table class="table" id="faqTable">
+      <thead><tr>
+        <th style="width:40px">Ordre</th>
+        <th>Question</th>
+        <th>Catégorie</th>
+        <th style="width:90px">Accueil</th>
+        <th style="width:80px">Statut</th>
+        <th style="width:90px">Actions</th>
+      </tr></thead>
+      <tbody>
+      {% for faq in faqs %}
+      <tr data-cat="{{ faq.category }}">
+        <td style="color:#9CA3AF;font-size:.78rem;text-align:center">{{ faq.order }}</td>
+        <td>
+          <div style="font-weight:600;font-size:.83rem;color:#111;margin-bottom:2px">{{ faq.question|truncatechars:70 }}</div>
+          <div style="font-size:.72rem;color:#9CA3AF">{{ faq.answer|truncatechars:60 }}</div>
+        </td>
+        <td>
+          <span class="section-tag-pill" style="font-size:.65rem">{{ faq.get_category_display }}</span>
+        </td>
+        <td style="text-align:center">
+          <form method="post" action="{% url 'dashboard_faq_toggle_featured' faq.id %}">
+            {% csrf_token %}
+            <button type="submit" style="background:none;border:none;cursor:pointer;font-size:1rem;color:{% if faq.is_featured %}#C9A96E{% else %}#D1D5DB{% endif %}" title="{% if faq.is_featured %}Retirer de l'accueil{% else %}Afficher sur l'accueil{% endif %}">
+              <i class="fas fa-star"></i>
+            </button>
+          </form>
+        </td>
+        <td>
+          <form method="post" action="{% url 'dashboard_faq_toggle' faq.id %}">
+            {% csrf_token %}
+            <label class="toggle-switch">
+              <input type="checkbox" {% if faq.is_active %}checked{% endif %} onchange="this.form.submit()">
+              <span class="toggle-slider"></span>
+            </label>
+          </form>
+        </td>
+        <td>
+          <div style="display:flex;gap:5px">
+            <button onclick="openEdit({{ faq.id }},'{{ faq.question|escapejs }}',`{{ faq.answer|escapejs }}`,`{{ faq.answer_items|escapejs }}`,'{{ faq.category }}',{{ faq.order }},{{ faq.is_active|yesno:'true,false' }},{{ faq.is_featured|yesno:'true,false' }})"
+              class="btn-icon" title="Modifier"><i class="fas fa-edit"></i></button>
+            <form method="post" action="{% url 'dashboard_faq_delete' faq.id %}" onsubmit="return confirm('Supprimer cette question ?')">
+              {% csrf_token %}
+              <button type="submit" class="btn-icon danger" title="Supprimer"><i class="fas fa-trash"></i></button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <i class="fas fa-question-circle"></i>
+    <h5 style="color:#374151">Aucune question configurée</h5>
+    <p>Ajoutez votre première question via le bouton en haut.</p>
+  </div>
+  {% endif %}
+</div>
+
+<!-- ════ MODAL AJOUTER ════ -->
+<div class="modal-overlay" id="addModal" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h6 style="margin:0;font-weight:700"><i class="fas fa-plus-circle me-2" style="color:#C9A96E"></i>Ajouter une question</h6>
+      <button class="close-btn" onclick="document.getElementById('addModal').style.display='none'">×</button>
+    </div>
+    <form method="post" action="{% url 'dashboard_faq_add' %}">
+      {% csrf_token %}
+      {% include 'dashboard/faq_form_fields.html' %}
+      <div class="modal-foot">
+        <button type="button" class="topbar-btn" onclick="document.getElementById('addModal').style.display='none'">Annuler</button>
+        <button type="submit" class="btn-gold"><i class="fas fa-save me-2"></i>Ajouter</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ════ MODAL MODIFIER ════ -->
+<div class="modal-overlay" id="editModal" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h6 style="margin:0;font-weight:700"><i class="fas fa-edit me-2" style="color:#C9A96E"></i>Modifier la question</h6>
+      <button class="close-btn" onclick="document.getElementById('editModal').style.display='none'">×</button>
+    </div>
+    <form method="post" id="editForm">
+      {% csrf_token %}
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label">Question <span style="color:#EF4444">*</span></label>
+            <textarea name="question" id="e_q" class="form-control" rows="2" required></textarea>
+          </div>
+          <div class="col-12">
+            <label class="form-label">Réponse <span style="color:#EF4444">*</span></label>
+            <textarea name="answer" id="e_a" class="form-control" rows="4" required></textarea>
+          </div>
+          <div class="col-12">
+            <label class="form-label">Liste à puces <span style="color:#9CA3AF;font-size:.75rem">(optionnel — une entrée par ligne)</span></label>
+            <textarea name="answer_items" id="e_items" class="form-control" rows="4" placeholder="- Continental&#10;- Buffet marocain"></textarea>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Catégorie</label>
+            <select name="category" id="e_cat" class="form-select">
+              {% for v,l in categories %}<option value="{{ v }}">{{ l }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Ordre</label>
+            <input type="number" name="order" id="e_order" class="form-control" min="0">
+          </div>
+          <div class="col-6">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px;background:#F9FAFB;border-radius:8px;border:1px solid #E5E7EB;font-size:.83rem">
+              <input type="checkbox" name="is_active" id="e_active" style="width:16px;height:16px;accent-color:#10B981"> Actif sur le site
+            </label>
+          </div>
+          <div class="col-6">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px;background:#F9FAFB;border-radius:8px;border:1px solid #E5E7EB;font-size:.83rem">
+              <input type="checkbox" name="is_featured" id="e_featured" style="width:16px;height:16px;accent-color:#C9A96E"> ★ Sur l'accueil
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="topbar-btn" onclick="document.getElementById('editModal').style.display='none'">Annuler</button>
+        <button type="submit" class="btn-gold"><i class="fas fa-save me-2"></i>Enregistrer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function openEdit(id, q, a, items, cat, order, active, featured) {
+  document.getElementById('editForm').action = '/dashboard/contenu/faq/' + id + '/modifier/';
+  document.getElementById('e_q').value       = q;
+  document.getElementById('e_a').value       = a;
+  document.getElementById('e_items').value   = items;
+  document.getElementById('e_cat').value     = cat;
+  document.getElementById('e_order').value   = order;
+  document.getElementById('e_active').checked   = active;
+  document.getElementById('e_featured').checked = featured;
+  document.getElementById('editModal').style.display = 'flex';
+}
+function filterTable(cat) {
+  document.querySelectorAll('#faqTable tbody tr').forEach(row => {
+    row.style.display = (!cat || row.dataset.cat === cat) ? '' : 'none';
+  });
+}
+</script>
+{% endblock %}

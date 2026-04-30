@@ -1,0 +1,665 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ service.name }} — {% load content_tags %}{% get_hotel_info as meta_info %}{% if meta_info %}{{ meta_info.hotel_name }}{% else %}Hôtel Al Andalus{% endif %}{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── HERO SERVICE ── */
+.service-hero {
+  position: relative;
+  height: 420px;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  background: #1A1D27;
+}
+.service-hero-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  transform: scale(1.05);
+  transition: transform 8s ease;
+}
+.service-hero:hover .service-hero-bg { transform: scale(1); }
+.service-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,.85) 0%, rgba(0,0,0,.35) 60%, rgba(0,0,0,.15) 100%);
+}
+.service-hero-content {
+  position: relative;
+  z-index: 2;
+  padding: 48px 0 40px;
+  width: 100%;
+}
+.service-hero-icon {
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  background: rgba(201,169,110,.15);
+  border: 1.5px solid rgba(201,169,110,.5);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 1.8rem; color: #C9A96E;
+  margin-bottom: 16px;
+  backdrop-filter: blur(6px);
+}
+.service-hero-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(2.2rem, 5vw, 3.5rem);
+  font-weight: 300;
+  color: #fff;
+  line-height: 1.1;
+  margin: 0 0 12px;
+}
+.service-hero-desc {
+  color: rgba(255,255,255,.75);
+  font-size: .95rem;
+  max-width: 600px;
+  line-height: 1.7;
+  font-weight: 300;
+}
+
+/* ── BREADCRUMB ── */
+.service-breadcrumb {
+  background: #FAF8F4;
+  border-bottom: 1px solid #E5E7EB;
+  padding: 14px 0;
+  font-size: .82rem;
+}
+.service-breadcrumb a { color: #C9A96E; text-decoration: none; }
+.service-breadcrumb a:hover { text-decoration: underline; }
+.service-breadcrumb .sep { color: #9CA3AF; margin: 0 8px; }
+.service-breadcrumb .current { color: #6B7280; }
+
+/* ── LONG DESCRIPTION ── */
+.service-body { background: #FAF8F4; padding: 60px 0; }
+.service-long-desc {
+  font-size: 1.05rem;
+  line-height: 1.9;
+  color: #374151;
+  font-weight: 300;
+}
+.service-long-desc p { margin-bottom: 1.2em; }
+
+/* ── GALLERY ── */
+/* ── GALLERY SLIDER ── */
+.gallery-section { background: #111317; padding: 70px 0; }
+.gallery-section .section-tag { color: #C9A96E; }
+.gallery-section .section-title-lg { color: #fff; }
+.gallery-section .divider-gold { background: #C9A96E; }
+
+/* Main slider */
+.slider-main {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16/7;
+  background: #0a0b0d;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 24px 64px rgba(0,0,0,.6);
+  max-height: 520px;
+}
+.slider-track {
+  display: flex;
+  height: 100%;
+  transition: transform .5s cubic-bezier(.4,0,.2,1);
+  will-change: transform;
+}
+.slider-slide {
+  flex: 0 0 100%;
+  height: 100%;
+  position: relative;
+}
+.slider-slide img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+  user-select: none;
+}
+.slider-slide-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,.6) 0%, transparent 50%);
+  pointer-events: none;
+}
+.slider-caption {
+  position: absolute; bottom: 20px; left: 28px; right: 80px;
+  color: #fff; font-size: .9rem; letter-spacing: .03em;
+  text-shadow: 0 1px 4px rgba(0,0,0,.7);
+  opacity: 0; transform: translateY(8px);
+  transition: all .4s .1s;
+}
+.slider-slide.active .slider-caption { opacity: 1; transform: translateY(0); }
+
+/* Nav arrows */
+.slider-btn {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  width: 52px; height: 52px;
+  background: rgba(0,0,0,.45);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,.15);
+  color: #fff; border-radius: 50%; font-size: 1.1rem;
+  cursor: pointer; z-index: 10;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .25s;
+}
+.slider-btn:hover { background: rgba(201,169,110,.75); border-color: #C9A96E; transform: translateY(-50%) scale(1.08); }
+.slider-prev { left: 18px; }
+.slider-next { right: 18px; }
+.slider-btn:disabled { opacity: .25; cursor: default; pointer-events: none; }
+
+/* Counter badge */
+.slider-counter {
+  position: absolute; top: 16px; right: 18px;
+  background: rgba(0,0,0,.55); backdrop-filter: blur(6px);
+  color: rgba(255,255,255,.85); font-size: .75rem;
+  padding: 5px 14px; border-radius: 20px; z-index: 10;
+  border: 1px solid rgba(255,255,255,.1);
+  letter-spacing: .04em;
+}
+
+/* Fullscreen btn */
+.slider-fullscreen {
+  position: absolute; bottom: 16px; right: 18px;
+  width: 38px; height: 38px;
+  background: rgba(0,0,0,.5); backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,.15); color: rgba(255,255,255,.8);
+  border-radius: 8px; cursor: pointer; z-index: 10;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .9rem; transition: all .2s;
+}
+.slider-fullscreen:hover { background: rgba(201,169,110,.6); color: #fff; }
+
+/* Dots */
+.slider-dots {
+  display: flex; align-items: center; justify-content: center;
+  gap: 8px; margin-top: 18px;
+}
+.slider-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: rgba(255,255,255,.25); cursor: pointer;
+  transition: all .3s; border: none; padding: 0;
+}
+.slider-dot.active { background: #C9A96E; transform: scale(1.3); }
+.slider-dot:hover { background: rgba(201,169,110,.6); }
+
+/* Thumbnails strip */
+.slider-thumbs {
+  display: flex; gap: 10px; margin-top: 14px;
+  overflow-x: auto; padding-bottom: 6px;
+  scrollbar-width: thin; scrollbar-color: #C9A96E #1a1d27;
+}
+.slider-thumbs::-webkit-scrollbar { height: 4px; }
+.slider-thumbs::-webkit-scrollbar-track { background: #1a1d27; border-radius: 2px; }
+.slider-thumbs::-webkit-scrollbar-thumb { background: #C9A96E; border-radius: 2px; }
+.slider-thumb {
+  flex: 0 0 90px; height: 62px;
+  border-radius: 7px; overflow: hidden; cursor: pointer;
+  border: 2px solid transparent;
+  transition: all .25s; opacity: .55;
+}
+.slider-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.slider-thumb.active { border-color: #C9A96E; opacity: 1; transform: translateY(-2px); }
+.slider-thumb:hover { opacity: .85; }
+
+/* Swipe hint on mobile */
+@media(max-width:768px) {
+  .slider-main { aspect-ratio: 4/3; max-height: 340px; }
+  .slider-btn { width: 40px; height: 40px; font-size: .9rem; }
+  .slider-thumb { flex: 0 0 70px; height: 48px; }
+}
+
+
+/* ── RESTAURANT MENU ── */
+.menu-section { background: #1A1D27; padding: 70px 0; }
+.menu-section .section-tag { color: #C9A96E; }
+.menu-card-detail {
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(201,169,110,.2);
+  border-radius: 14px;
+  overflow: hidden;
+  transition: all .3s;
+  cursor: zoom-in;
+}
+.menu-card-detail:hover {
+  transform: translateY(-6px);
+  border-color: #C9A96E;
+  box-shadow: 0 16px 40px rgba(0,0,0,.4);
+}
+.menu-card-detail-img-wrap { overflow: hidden; }
+.menu-card-detail-img {
+  width: 100%; aspect-ratio: 3/4;
+  object-fit: cover;
+  display: block;
+  transition: transform .5s;
+}
+.menu-card-detail:hover .menu-card-detail-img { transform: scale(1.04); }
+.menu-card-detail-body { padding: 18px 20px; }
+.menu-card-detail-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.1rem; font-weight: 600;
+  color: #fff; margin-bottom: 4px;
+}
+.menu-card-detail-desc { font-size: .82rem; color: rgba(255,255,255,.5); line-height: 1.5; }
+
+/* ── OTHER SERVICES ── */
+.other-services-section { background: #FAF8F4; padding: 60px 0; }
+.other-service-card {
+  background: #fff;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  padding: 28px 24px;
+  text-align: center;
+  transition: all .3s;
+  text-decoration: none;
+  display: block;
+  color: inherit;
+}
+.other-service-card:hover {
+  transform: translateY(-5px);
+  border-color: #C9A96E;
+  box-shadow: 0 12px 32px rgba(0,0,0,.1);
+  color: inherit;
+}
+.other-service-icon {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: rgba(201,169,110,.1);
+  border: 1px solid rgba(201,169,110,.3);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 1.3rem; color: #C9A96E;
+  margin-bottom: 14px;
+}
+.other-service-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.1rem; font-weight: 600; color: #111;
+  margin-bottom: 6px;
+}
+.other-service-desc { font-size: .8rem; color: #6B7280; line-height: 1.5; }
+
+/* ── LIGHTBOX ── */
+.lightbox-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.95);
+  z-index: 9999; align-items: center; justify-content: center;
+  padding: 20px; cursor: zoom-out;
+}
+.lightbox-overlay.open { display: flex; animation: lbFade .25s ease; }
+@keyframes lbFade { from{opacity:0} to{opacity:1} }
+.lightbox-img {
+  max-width: 90vw; max-height: 90vh; object-fit: contain;
+  border-radius: 8px; box-shadow: 0 24px 64px rgba(0,0,0,.6);
+  cursor: default; animation: lbZoom .25s ease;
+  transition: opacity .12s ease;
+}
+@keyframes lbZoom { from{transform:scale(.92);opacity:0} to{transform:scale(1);opacity:1} }
+.lightbox-close {
+  position: fixed; top: 20px; right: 24px;
+  background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2);
+  color: #fff; width: 42px; height: 42px;
+  border-radius: 50%; font-size: 1.3rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .2s; z-index: 10000;
+}
+.lightbox-close:hover { background: rgba(255,255,255,.25); }
+.lightbox-nav {
+  position: fixed; top: 50%; transform: translateY(-50%);
+  background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2);
+  color: #fff; width: 46px; height: 46px; border-radius: 50%;
+  font-size: 1.1rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .2s; z-index: 10000;
+}
+.lightbox-nav:hover { background: rgba(201,169,110,.5); border-color: #C9A96E; }
+.lightbox-prev { left: 20px; }
+.lightbox-next { right: 20px; }
+.lightbox-caption {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  background: rgba(0,0,0,.7); backdrop-filter: blur(8px);
+  color: #fff; padding: 10px 24px; border-radius: 30px;
+  font-size: .85rem; letter-spacing: .03em; z-index: 10000;
+  border: 1px solid rgba(255,255,255,.1); white-space: nowrap;
+}
+.lightbox-counter {
+  position: fixed; top: 24px; left: 50%; transform: translateX(-50%);
+  background: rgba(0,0,0,.6); color: rgba(255,255,255,.7);
+  padding: 5px 16px; border-radius: 20px; font-size: .75rem; z-index: 10000;
+}
+
+/* ── AMENITY CARD LINK (home.html fix) ── */
+a.amenity-card-link {
+  display: block; text-decoration: none; color: inherit;
+}
+.amenity-card-cta {
+  display: inline-block;
+  margin-top: 14px;
+  font-size: .78rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #C9A96E;
+  border-bottom: 1px solid rgba(201,169,110,.4);
+  padding-bottom: 2px;
+  transition: border-color .2s;
+}
+.amenity-card:hover .amenity-card-cta { border-color: #C9A96E; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{# ── HERO ── #}
+<section class="service-hero">
+  {% with img=service.get_image %}
+  {% if img %}
+  <div class="service-hero-bg" style="background-image:url('{{ img }}');"></div>
+  {% else %}
+  <div class="service-hero-bg" style="background:linear-gradient(135deg,#1A1D27,#2C2F3E);"></div>
+  {% endif %}
+  {% endwith %}
+  <div class="service-hero-overlay"></div>
+  <div class="container service-hero-content">
+    <div class="service-hero-icon"><i class="{{ service.icon_class }}"></i></div>
+    <h1 class="service-hero-title">{{ service.name }}</h1>
+    <p class="service-hero-desc">{{ service.description }}</p>
+  </div>
+</section>
+
+{# ── BREADCRUMB ── #}
+<div class="service-breadcrumb">
+  <div class="container">
+    <a href="{% url 'home' %}">Accueil</a>
+    <span class="sep">›</span>
+    <a href="{% url 'home' %}#amenities">Services</a>
+    <span class="sep">›</span>
+    <span class="current">{{ service.name }}</span>
+  </div>
+</div>
+
+{# ── DESCRIPTION ── #}
+<section class="service-body">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="text-center mb-4">
+          <div class="section-tag">À propos</div>
+          <h2 class="section-title-lg">{{ service.name }}</h2>
+          <div class="divider-gold mx-auto"></div>
+        </div>
+        <div class="service-long-desc">
+          {% if service.long_description %}
+            {{ service.long_description|linebreaks }}
+          {% else %}
+            <p>{{ service.description }}</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{# ── GALLERY SLIDER ── #}
+{% if gallery %}
+<section class="gallery-section">
+  <div class="container">
+    <div class="text-center mb-5">
+      <div class="section-tag">Galerie</div>
+      <h2 class="section-title-lg">Photos &amp; Images</h2>
+      <div class="divider-gold mx-auto"></div>
+    </div>
+
+    {# Main slider #}
+    <div class="slider-main" id="mainSlider">
+      <div class="slider-track" id="sliderTrack">
+        {% for img in gallery %}
+        <div class="slider-slide{% if forloop.first %} active{% endif %}" data-index="{{ forloop.counter0 }}">
+          <img src="{{ img.get_image }}" alt="{{ img.caption|default:service.name }}" loading="{% if forloop.first %}eager{% else %}lazy{% endif %}">
+          <div class="slider-slide-overlay"></div>
+          {% if img.caption %}<div class="slider-caption">{{ img.caption }}</div>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+
+      {# Arrows #}
+      {% if gallery|length > 1 %}
+      <button class="slider-btn slider-prev" id="sliderPrev" onclick="sliderGo(-1)" aria-label="Image précédente">
+        <i class="fas fa-chevron-left"></i>
+      </button>
+      <button class="slider-btn slider-next" id="sliderNext" onclick="sliderGo(1)" aria-label="Image suivante">
+        <i class="fas fa-chevron-right"></i>
+      </button>
+      {% endif %}
+
+      {# Counter #}
+      <div class="slider-counter" id="sliderCounter">1 / {{ gallery|length }}</div>
+
+      {# Fullscreen #}
+      <button class="slider-fullscreen" onclick="openLightbox(currentSlide, 'gallery')" title="Plein écran">
+        <i class="fas fa-expand-alt"></i>
+      </button>
+    </div>
+
+    {# Dots #}
+    {% if gallery|length > 1 %}
+    <div class="slider-dots" id="sliderDots">
+      {% for img in gallery %}
+      <button class="slider-dot{% if forloop.first %} active{% endif %}"
+              onclick="sliderGoTo({{ forloop.counter0 }})"
+              aria-label="Image {{ forloop.counter }}"></button>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {# Thumbnails strip #}
+    {% if gallery|length > 1 %}
+    <div class="slider-thumbs" id="sliderThumbs">
+      {% for img in gallery %}
+      <div class="slider-thumb{% if forloop.first %} active{% endif %}"
+           id="thumb-{{ forloop.counter0 }}"
+           onclick="sliderGoTo({{ forloop.counter0 }})"
+           title="{{ img.caption|default:service.name }}">
+        <img src="{{ img.get_image }}" alt="{{ img.caption|default:service.name }}" loading="lazy">
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+  </div>
+</section>
+{% endif %}
+
+
+{# ── RESTAURANT MENU ── #}
+{% if is_restaurant and menu_cards %}
+<section class="menu-section">
+  <div class="container">
+    <div class="text-center mb-5">
+      <div class="section-tag" style="color:#C9A96E;">Restaurant</div>
+      <h2 class="section-title-lg" style="color:#fff;">Notre Carte</h2>
+      <div class="divider-gold mx-auto mb-3"></div>
+      <p style="color:rgba(255,255,255,.55);font-size:.9rem;">
+        Cliquez sur une image pour l'agrandir
+      </p>
+    </div>
+    <div class="row g-4 justify-content-center">
+      {% for card in menu_cards %}
+      <div class="col-lg-4 col-md-6 col-10">
+        <div class="menu-card-detail" onclick="openLightbox({{ forloop.counter0 }}, 'menu')">
+          <div class="menu-card-detail-img-wrap">
+            <img src="{{ card.get_image }}" alt="{{ card.title }}" class="menu-card-detail-img" loading="lazy">
+          </div>
+          <div class="menu-card-detail-body">
+            <div class="menu-card-detail-title">{{ card.title }}</div>
+            {% if card.description %}
+            <div class="menu-card-detail-desc">{{ card.description }}</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="text-center mt-5">
+      <a href="{% url 'menu_card_page' %}" class="btn btn-outline-gold px-5">
+        <i class="fas fa-utensils me-2"></i>Voir toute la carte
+      </a>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{# ── OTHER SERVICES ── #}
+{% if other_services %}
+<section class="other-services-section">
+  <div class="container">
+    <div class="text-center mb-5">
+      <div class="section-tag">Découvrez aussi</div>
+      <h2 class="section-title-lg">Nos autres services</h2>
+      <div class="divider-gold mx-auto"></div>
+    </div>
+    <div class="row g-4 justify-content-center">
+      {% for s in other_services %}
+      <div class="col-lg-3 col-md-6">
+        <a href="{% url 'service_detail' s.slug %}" class="other-service-card">
+          <div class="other-service-icon"><i class="{{ s.icon_class }}"></i></div>
+          <div class="other-service-name">{{ s.name }}</div>
+          <div class="other-service-desc">{{ s.description|truncatechars:80 }}</div>
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="text-center mt-5">
+      <a href="{% url 'room_list' %}" class="btn btn-gold btn-lg px-5">
+        <i class="fas fa-calendar-check me-2"></i>Réserver votre séjour
+      </a>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{# ── LIGHTBOX ── #}
+<div class="lightbox-overlay" id="lightbox" onclick="if(event.target===this)closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()"><i class="fas fa-times"></i></button>
+  <button class="lightbox-nav lightbox-prev" onclick="event.stopPropagation();navigateLightbox(-1)"><i class="fas fa-chevron-left"></i></button>
+  <img src="" alt="" class="lightbox-img" id="lightbox-img" onclick="event.stopPropagation()">
+  <button class="lightbox-nav lightbox-next" onclick="event.stopPropagation();navigateLightbox(1)"><i class="fas fa-chevron-right"></i></button>
+  <div class="lightbox-caption" id="lightbox-caption"></div>
+  <div class="lightbox-counter" id="lightbox-counter"></div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/* ── GALLERY DATA ── */
+const galleryItems = [
+  {% for img in gallery %}
+  { img: "{{ img.get_image|escapejs }}", caption: "{{ img.caption|default:service.name|escapejs }}" },
+  {% endfor %}
+];
+const menuItems = [
+  {% for card in menu_cards %}
+  { img: "{{ card.get_image|escapejs }}", caption: "{{ card.title|escapejs }}{% if card.description %} — {{ card.description|escapejs }}{% endif %}" },
+  {% endfor %}
+];
+
+/* ── SLIDER ── */
+let currentSlide = 0;
+const total = galleryItems.length;
+
+function sliderGoTo(idx) {
+  if (total <= 1) return;
+  const prev = currentSlide;
+  currentSlide = (idx + total) % total;
+
+  // Move track
+  document.getElementById('sliderTrack').style.transform = `translateX(-${currentSlide * 100}%)`;
+
+  // Active slide class
+  document.querySelectorAll('.slider-slide').forEach((s, i) => s.classList.toggle('active', i === currentSlide));
+
+  // Counter
+  document.getElementById('sliderCounter').textContent = `${currentSlide + 1} / ${total}`;
+
+  // Dots
+  document.querySelectorAll('.slider-dot').forEach((d, i) => d.classList.toggle('active', i === currentSlide));
+
+  // Thumbnails
+  document.querySelectorAll('.slider-thumb').forEach((t, i) => {
+    t.classList.toggle('active', i === currentSlide);
+    if (i === currentSlide) t.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+  });
+}
+
+function sliderGo(dir) { sliderGoTo(currentSlide + dir); }
+
+/* Auto-play */
+let autoPlay = null;
+function startAutoPlay() {
+  if (total <= 1) return;
+  autoPlay = setInterval(() => sliderGo(1), 5000);
+}
+function stopAutoPlay() { clearInterval(autoPlay); }
+
+document.getElementById('mainSlider')?.addEventListener('mouseenter', stopAutoPlay);
+document.getElementById('mainSlider')?.addEventListener('mouseleave', startAutoPlay);
+startAutoPlay();
+
+/* Touch / swipe support */
+let touchStartX = 0;
+document.getElementById('mainSlider')?.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
+document.getElementById('mainSlider')?.addEventListener('touchend', e => {
+  const diff = touchStartX - e.changedTouches[0].clientX;
+  if (Math.abs(diff) > 40) sliderGo(diff > 0 ? 1 : -1);
+});
+
+/* Keyboard on slider focus */
+document.getElementById('mainSlider')?.setAttribute('tabindex', '0');
+document.addEventListener('keydown', e => {
+  if (document.getElementById('lightbox')?.classList.contains('open')) return;
+  if (e.key === 'ArrowRight') sliderGo(1);
+  if (e.key === 'ArrowLeft')  sliderGo(-1);
+});
+
+/* ── LIGHTBOX ── */
+let lbSource = [];
+let lbCurrent = 0;
+
+function openLightbox(idx, source) {
+  lbSource = source === 'menu' ? menuItems : galleryItems;
+  if (!lbSource.length) return;
+  lbCurrent = idx;
+  stopAutoPlay();
+  showLbItem();
+  document.getElementById('lightbox').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+  document.body.style.overflow = '';
+  startAutoPlay();
+}
+function showLbItem() {
+  const c = lbSource[lbCurrent];
+  const img = document.getElementById('lightbox-img');
+  img.style.opacity = '0';
+  setTimeout(() => {
+    img.src = c.img;
+    img.alt = c.caption;
+    img.style.opacity = '1';
+  }, 120);
+  document.getElementById('lightbox-caption').textContent = c.caption;
+  document.getElementById('lightbox-counter').textContent = `${lbCurrent + 1} / ${lbSource.length}`;
+  document.querySelectorAll('.lightbox-nav').forEach(b =>
+    b.style.display = lbSource.length > 1 ? 'flex' : 'none'
+  );
+}
+function navigateLightbox(dir) {
+  lbCurrent = (lbCurrent + dir + lbSource.length) % lbSource.length;
+  showLbItem();
+}
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('lightbox')?.classList.contains('open')) return;
+  if (e.key === 'ArrowRight') navigateLightbox(1);
+  if (e.key === 'ArrowLeft')  navigateLightbox(-1);
+  if (e.key === 'Escape')     closeLightbox();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block title %}Paiement refusé — Al Andalus{% endblock %}
+{% block content %}
+<section class="py-5" style="background:#F0F2F8;min-height:80vh;display:flex;align-items:center;padding-top:100px!important">
+<div class="container">
+<div class="row justify-content-center">
+<div class="col-lg-5">
+  <div style="background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.08);border:1px solid #E5E7EB">
+    <div style="background:linear-gradient(135deg,#991B1B,#B91C1C);padding:36px;text-align:center">
+      <div style="width:64px;height:64px;background:rgba(255,255,255,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:1.8rem">✕</div>
+      <h2 style="color:#fff;font-family:'Cormorant Garamond',serif;font-size:1.6rem;margin:0 0 6px">Paiement non abouti</h2>
+      <p style="color:rgba(255,255,255,.8);font-size:.85rem;margin:0">{{ error_msg }}</p>
+    </div>
+    <div style="padding:28px">
+      <div style="background:#FFF5F5;border:1px solid #FECACA;border-radius:10px;padding:16px;margin-bottom:20px">
+        <p style="color:#991B1B;font-size:.85rem;margin:0;line-height:1.6">
+          <strong>Votre réservation est conservée.</strong><br>
+          Vous pouvez réessayer le paiement ou choisir de payer à l'hôtel à votre arrivée.
+        </p>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        {% if payment %}
+        <a href="{% url 'payment_initiate' payment.booking.id %}"
+           style="display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#C9A96E,#A8854A);color:#fff;text-decoration:none;padding:13px;border-radius:10px;font-size:.88rem;font-weight:600">
+          <i class="fas fa-redo"></i>Réessayer le paiement
+        </a>
+        <a href="{% url 'booking_confirmation' payment.booking.id %}"
+           style="display:flex;align-items:center;justify-content:center;gap:8px;background:#F9FAFB;color:#374151;text-decoration:none;padding:12px;border-radius:10px;font-size:.85rem;border:1px solid #E5E7EB">
+          <i class="fas fa-calendar-check"></i>Voir ma réservation (payer à l'hôtel)
+        </a>
+        {% endif %}
+        <a href="{% url 'home' %}"
+           style="display:flex;align-items:center;justify-content:center;gap:8px;background:#F9FAFB;color:#374151;text-decoration:none;padding:12px;border-radius:10px;font-size:.85rem;border:1px solid #E5E7EB">
+          <i class="fas fa-home"></i>Retour à l'accueil
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+</section>
+{% endblock %}

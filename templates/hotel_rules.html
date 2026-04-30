@@ -1,0 +1,256 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Règles de la maison — Hôtel Al Andalus{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<section class="page-hero" style="height:260px">
+  <div class="page-hero-overlay"></div>
+  <div style="position:absolute;inset:0;background:linear-gradient(135deg,#1A1D27,#2C2C2C)"></div>
+  <div class="container page-hero-content">
+    <nav aria-label="breadcrumb"><ol class="breadcrumb breadcrumb-light">
+      <li class="breadcrumb-item"><a href="{% url 'home' %}">Accueil</a></li>
+      <li class="breadcrumb-item active">Règles de la maison</li>
+    </ol></nav>
+    <h1 class="page-hero-title">Règles de la maison</h1>
+    <p style="color:rgba(255,255,255,.65);font-size:.9rem;margin-top:6px">
+      {% if info %}{{ info.hotel_name }}{% else %}Al Andalus{% endif %} accepte les demandes spéciales. Ajoutez la vôtre lors de votre réservation.
+    </p>
+  </div>
+</section>
+
+<section class="py-5" style="background:#FAF8F4">
+<div class="container">
+<div class="row justify-content-center">
+<div class="col-lg-8">
+
+  <div style="background:#fff;border-radius:16px;border:1px solid #E5E7EB;overflow:hidden;box-shadow:0 2px 20px rgba(0,0,0,.06)">
+
+    {% with r=rules %}
+
+    <!-- ── CHECK-IN / CHECK-OUT ── -->
+    <div class="rules-row">
+      <div class="rules-icon-col">
+        <i class="fas fa-sign-in-alt rules-icon"></i>
+      </div>
+      <div class="rules-label-col">Arrivée</div>
+      <div class="rules-content-col">
+        De <strong>{{ r.checkin_from|time:"H:i" }}</strong> à <strong>{{ r.checkin_until|time:"H:i" }}</strong>
+      </div>
+    </div>
+
+    <div class="rules-row">
+      <div class="rules-icon-col">
+        <i class="fas fa-sign-out-alt rules-icon"></i>
+      </div>
+      <div class="rules-label-col">Départ</div>
+      <div class="rules-content-col">
+        De <strong>{{ r.checkout_from|time:"H:i" }}</strong> à <strong>{{ r.checkout_until|time:"H:i" }}</strong>
+      </div>
+    </div>
+
+    <!-- ── ANNULATION ── -->
+    <div class="rules-row">
+      <div class="rules-icon-col">
+        <i class="fas fa-info-circle rules-icon"></i>
+      </div>
+      <div class="rules-label-col">Annulation /<br>Prépaiement</div>
+      <div class="rules-content-col">
+        <p>{{ r.cancellation_policy }}</p>
+        {% if r.prepayment_policy %}
+        <p style="margin-top:8px">{{ r.prepayment_policy }}</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- ── ENFANTS ── -->
+    <div class="rules-row">
+      <div class="rules-icon-col">
+        <i class="fas fa-child rules-icon"></i>
+      </div>
+      <div class="rules-label-col">Enfants et lits</div>
+      <div class="rules-content-col">
+        {% if r.children_allowed %}
+        <p class="rules-subtitle">Conditions relatives aux enfants</p>
+        <p>{{ r.children_policy }}</p>
+
+        {% if r.baby_cot_available or r.extra_bed_available %}
+        <p class="rules-subtitle" style="margin-top:16px">Conditions relatives aux lits bébé et aux lits d'appoint</p>
+        {% endif %}
+
+        {% if r.baby_cot_available %}
+        <div class="rules-table">
+          <div class="rules-table-header">{{ r.baby_cot_age_range }}</div>
+          <div class="rules-table-row">
+            <div><i class="fas fa-baby rules-icon-sm"></i> Lit bébé sur demande</div>
+            <div style="color:#10B981;font-weight:600">{{ r.baby_cot_price }}</div>
+          </div>
+        </div>
+        <p style="margin-top:10px;font-size:.85rem;color:#555">Tous les lits bébé sont soumis à disponibilité.</p>
+        {% endif %}
+
+        {% if r.extra_bed_available %}
+        <div class="rules-table" style="margin-top:10px">
+          <div class="rules-table-row">
+            <div><i class="fas fa-bed rules-icon-sm"></i> Lit d'appoint</div>
+            <div style="color:#10B981;font-weight:600">{{ r.extra_bed_price|default:"Sur demande" }}</div>
+          </div>
+        </div>
+        {% else %}
+        <p style="margin-top:8px;font-size:.85rem;color:#555">Cet établissement ne propose pas de lits d'appoint.</p>
+        {% endif %}
+
+        {% else %}
+        <p>Les enfants ne sont pas acceptés dans cet établissement.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- ── ÂGE MINIMUM ── -->
+    <div class="rules-row">
+      <div class="rules-icon-col">
+        <i class="fas fa-user-check rules-icon"></i>
+      </div>
+      <div class="rules-label-col">{% if r.age_restriction %}Âge minimum{% else %}Restriction d'âge{% endif %}</div>
+      <div class="rules-content-col">
+        {% if r.age_restriction %}
+        <p>L'âge minimum requis pour l'enregistrement est de <strong>{{ r.age_minimum }} ans</strong>.</p>
+        {% else %}
+        <p>{{ r.age_restriction_notes }}</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- ── ANIMAUX ── -->
+    <div class="rules-row">
+      <div class="rules-icon-col">
+        <i class="fas fa-paw rules-icon"></i>
+      </div>
+      <div class="rules-label-col">Animaux domestiques</div>
+      <div class="rules-content-col">
+        {% if r.pets_allowed %}
+        <span style="color:#10B981;font-weight:600"><i class="fas fa-check-circle me-1"></i>Animaux acceptés</span>
+        {% if r.pets_policy %}<p style="margin-top:6px">{{ r.pets_policy }}</p>{% endif %}
+        {% else %}
+        <p>{{ r.pets_policy }}</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- ── FUMEURS ── -->
+    <div class="rules-row">
+      <div class="rules-icon-col">
+        <i class="fas fa-smoking-ban rules-icon"></i>
+      </div>
+      <div class="rules-label-col">Fumeurs</div>
+      <div class="rules-content-col">
+        {% if r.smoking_allowed %}
+        <span style="color:#F59E0B;font-weight:600"><i class="fas fa-smoking me-1"></i>Zones fumeurs disponibles</span>
+        {% else %}
+        <span style="color:#EF4444;font-weight:600"><i class="fas fa-smoking-ban me-1"></i>Non-fumeur</span>
+        {% endif %}
+        {% if r.smoking_notes %}<p style="margin-top:6px">{{ r.smoking_notes }}</p>{% endif %}
+      </div>
+    </div>
+
+    <!-- ── FÊTES ── -->
+    <div class="rules-row">
+      <div class="rules-icon-col">
+        <i class="fas fa-glass-cheers rules-icon"></i>
+      </div>
+      <div class="rules-label-col">Fêtes / Événements</div>
+      <div class="rules-content-col">
+        {% if r.parties_allowed %}
+        <span style="color:#10B981;font-weight:600"><i class="fas fa-check-circle me-1"></i>Autorisés</span>
+        {% else %}
+        <span style="color:#EF4444;font-weight:600"><i class="fas fa-times-circle me-1"></i>Non autorisés</span>
+        {% endif %}
+        {% if r.parties_notes %}<p style="margin-top:6px">{{ r.parties_notes }}</p>{% endif %}
+      </div>
+    </div>
+
+    <!-- ── GROUPES ── -->
+    <div class="rules-row">
+      <div class="rules-icon-col">
+        <i class="fas fa-users rules-icon"></i>
+      </div>
+      <div class="rules-label-col">Groupes</div>
+      <div class="rules-content-col">
+        <p>{{ r.groups_policy }}</p>
+      </div>
+    </div>
+
+    <!-- ── PAIEMENTS ── -->
+    <div class="rules-row" style="border-bottom:none">
+      <div class="rules-icon-col">
+        <i class="fas fa-credit-card rules-icon"></i>
+      </div>
+      <div class="rules-label-col">Moyens de paiement</div>
+      <div class="rules-content-col">
+        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+          {% if r.accepts_visa %}
+          <div class="payment-badge" style="background:#1A1F71">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/200px-Visa_Inc._logo.svg.png" style="height:16px;filter:brightness(0) invert(1)" alt="Visa">
+          </div>
+          {% endif %}
+          {% if r.accepts_mastercard %}
+          <div class="payment-badge" style="background:#EB001B">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/200px-Mastercard-logo.svg.png" style="height:22px" alt="Mastercard">
+          </div>
+          {% endif %}
+          {% if r.accepts_amex %}
+          <div class="payment-badge" style="background:#007BC1">
+            <span style="color:#fff;font-size:.65rem;font-weight:700;letter-spacing:.05em">AMEX</span>
+          </div>
+          {% endif %}
+          {% if r.accepts_cmi %}
+          <div class="payment-badge" style="background:#1A1D27">
+            <span style="color:#C9A96E;font-size:.65rem;font-weight:700;letter-spacing:.05em">CMI</span>
+          </div>
+          {% endif %}
+          {% if r.accepts_cash %}
+          <div class="payment-badge" style="background:#10B981">
+            <span style="color:#fff;font-size:.68rem;font-weight:700">Espèces</span>
+          </div>
+          {% endif %}
+          {% if r.accepts_bank_transfer %}
+          <div class="payment-badge" style="background:#6B7280">
+            <span style="color:#fff;font-size:.65rem;font-weight:700">Virement</span>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- ── RÈGLES SUPPLÉMENTAIRES ── -->
+    {% if r.additional_rules %}
+    <div class="rules-row" style="border-bottom:none;background:#F9FAFB">
+      <div class="rules-icon-col">
+        <i class="fas fa-list-ul rules-icon"></i>
+      </div>
+      <div class="rules-label-col">Autres règles</div>
+      <div class="rules-content-col">
+        <p>{{ r.additional_rules|linebreaksbr }}</p>
+      </div>
+    </div>
+    {% endif %}
+
+    {% endwith %}
+  </div><!-- end card -->
+
+  <!-- CTA -->
+  <div style="text-align:center;margin-top:28px">
+    <a href="{% url 'room_list' %}" class="btn btn-gold btn-lg px-5">
+      <i class="fas fa-bed me-2"></i>Réserver une chambre
+    </a>
+    <p style="font-size:.8rem;color:#9CA3AF;margin-top:10px">
+      Des questions ? Contactez-nous au
+      {% if info %}<a href="tel:{{ info.phone }}" style="color:var(--gold)">{{ info.phone }}</a>{% endif %}
+    </p>
+  </div>
+
+</div>
+</div>
+</div>
+</section>
+{% endblock %}

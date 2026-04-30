@@ -1,0 +1,234 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Réserver {{ room.name }} — Hôtel Al Andalus{% endblock %}
+
+{% block content %}
+{% load content_tags %}{% get_hotel_info as pg_info %}<section class="page-hero">
+  <div class="page-hero-overlay"></div>
+  <div style="position:absolute;inset:0;background-image:url('{% if pg_info and pg_info.hero_booking_image_url %}{{ pg_info.hero_booking_image_url }}{% else %}https://images.unsplash.com/photo-1496417263034-38ec4f0b665a?w=1920&q=80{% endif %}');background-size:cover;background-position:center"></div>
+    <div class="page-hero-overlay"></div>
+    <div class="container page-hero-content">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-light">
+                <li class="breadcrumb-item"><a href="{% url 'home' %}">Accueil</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'room_list' %}">Chambres</a></li>
+                <li class="breadcrumb-item"><a href="{{ room.get_absolute_url }}">{{ room.name }}</a></li>
+                <li class="breadcrumb-item active">Réservation</li>
+            </ol>
+        </nav>
+        <h1 class="page-hero-title">Réserver {{ room.name }}</h1>
+    </div>
+</section>
+
+<section class="py-5 booking-form-section">
+<div class="container">
+<div class="row g-5">
+
+    <!-- Form -->
+    <div class="col-lg-7">
+        <div class="booking-form-card">
+            <div class="form-section-header">
+                <h4><i class="fas fa-user-circle text-gold me-2"></i>Vos Informations</h4>
+                <p class="text-muted small">Remplissez le formulaire ci-dessous pour finaliser votre réservation.</p>
+            </div>
+
+            {% if avail and not avail.available %}
+<div style="background:#FEE2E2;border:1px solid #FECACA;border-radius:12px;padding:18px 22px;margin-bottom:20px;display:flex;gap:14px;align-items:flex-start">
+  <i class="fas fa-exclamation-triangle" style="color:#EF4444;font-size:1.3rem;flex-shrink:0;margin-top:2px"></i>
+  <div>
+    <div style="font-weight:700;color:#991B1B;font-size:.95rem;margin-bottom:4px">{{ avail.message }}</div>
+    <div style="font-size:.82rem;color:#B91C1C">
+      Veuillez sélectionner d'autres dates ou
+      <a href="{% url 'room_list' %}" style="color:#991B1B;font-weight:600">choisir un autre type de chambre</a>.
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% if avail and avail.available and avail.urgency == 'high' %}
+<div style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:10px;padding:12px 18px;margin-bottom:16px;display:flex;gap:10px;align-items:center">
+  <i class="fas fa-fire" style="color:#F59E0B"></i>
+  <div style="font-size:.83rem;color:#92400E"><strong>Forte demande !</strong> {{ avail.message }} pour ces dates.</div>
+</div>
+{% endif %}
+
+{% if messages %}
+            <div class="mb-3">
+                {% for message in messages %}
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle me-2"></i>{{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <form method="post" id="bookingForm" novalidate>
+                {% csrf_token %}
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-500">Nom complet <span class="text-danger">*</span></label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                        <div class="invalid-feedback d-block">{{ form.name.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-500">Email <span class="text-danger">*</span></label>
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                        <div class="invalid-feedback d-block">{{ form.email.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-500">Téléphone</label>
+                        {{ form.phone }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-500">Nombre de personnes <span class="text-danger">*</span></label>
+                        {{ form.guests }}
+                        <div class="form-text">Max. {{ room.capacity }} personnes</div>
+                        {% if form.guests.errors %}
+                        <div class="invalid-feedback d-block">{{ form.guests.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-500">Date d'arrivée <span class="text-danger">*</span></label>
+                        {{ form.check_in }}
+                        {% if form.check_in.errors %}
+                        <div class="invalid-feedback d-block">{{ form.check_in.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-500">Date de départ <span class="text-danger">*</span></label>
+                        {{ form.check_out }}
+                        {% if form.check_out.errors %}
+                        <div class="invalid-feedback d-block">{{ form.check_out.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-500">Demandes spéciales</label>
+                        {{ form.special_requests }}
+                    </div>
+                </div>
+
+                <!-- Price estimator (dynamic) -->
+                <div class="price-estimator mt-4" id="priceEstimator">
+                    <div class="price-est-label"><i class="fas fa-calculator me-2 text-gold"></i>Estimation du prix</div>
+                    <div id="priceEstimateResult" class="price-est-result">
+                        Sélectionnez vos dates pour voir le prix total.
+                    </div>
+                </div>
+
+                <div class="mt-4 d-flex gap-3 align-items-center">
+                    <button type="submit" class="btn btn-gold btn-lg px-5 flex-grow-1" id="submitBtn">
+                        <i class="fas fa-calendar-check me-2"></i>Confirmer la Réservation
+                    </button>
+                    <a href="{{ room.get_absolute_url }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i>
+                    </a>
+                </div>
+                <p class="small text-muted mt-2 text-center">
+                    <i class="fas fa-shield-alt text-gold me-1"></i>
+                    Votre réservation est sécurisée par chiffrement SSL. Annulation gratuite jusqu'à 48h avant.
+                </p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Summary Card -->
+    <div class="col-lg-5">
+        <div class="booking-summary-card sticky-booking">
+            <div class="summary-header">
+                <h5><i class="fas fa-receipt me-2"></i>Récapitulatif</h5>
+            </div>
+            <div class="summary-room-image">
+                {% if room.get_primary_image %}
+                    <img src="{{ room.get_primary_image }}" alt="{{ room.name }}">
+                {% else %}
+                    <img src="https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&q=80" alt="{{ room.name }}">
+                {% endif %}
+                <div class="summary-room-badge">{{ room.get_category_display }}</div>
+            </div>
+            <div class="summary-body">
+                <h6 class="summary-room-name">{{ room.name }}</h6>
+                <div class="summary-detail">
+                    <span><i class="fas fa-users me-2 text-gold"></i>Capacité</span>
+                    <span>{{ room.capacity }} personnes max.</span>
+                </div>
+                <div class="summary-detail">
+                    <span><i class="fas fa-vector-square me-2 text-gold"></i>Superficie</span>
+                    <span>{{ room.size }} m²</span>
+                </div>
+                <div class="summary-detail">
+                    <span><i class="fas fa-tag me-2 text-gold"></i>Tarif</span>
+                    <span class="price-highlight">{{ room.price|floatformat:0 }} MAD/nuit</span>
+                </div>
+                <div class="summary-total" id="summaryTotal" style="display:none;">
+                    <div class="total-row">
+                        <span id="totalNights">0 nuits</span>
+                        <strong id="totalPrice">0 MAD</strong>
+                    </div>
+                </div>
+                <div class="summary-includes mt-3">
+                    <h6 class="small text-muted mb-2">Inclus dans le tarif :</h6>
+                    {% if room.has_wifi %}<div class="include-item"><i class="fas fa-check text-gold"></i>WiFi Haut Débit</div>{% endif %}
+                    {% if room.has_ac %}<div class="include-item"><i class="fas fa-check text-gold"></i>Climatisation</div>{% endif %}
+                    <div class="include-item"><i class="fas fa-check text-gold"></i>Petit-déjeuner buffet</div>
+                    <div class="include-item"><i class="fas fa-check text-gold"></i>Accès piscine</div>
+                    <div class="include-item"><i class="fas fa-check text-gold"></i>Parking offert</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+</div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const pricePerNight = {{ room.price }};
+
+function updatePriceEstimate() {
+    const checkIn = document.querySelector('[name="check_in"]').value;
+    const checkOut = document.querySelector('[name="check_out"]').value;
+    
+    if (checkIn && checkOut) {
+        const ci = new Date(checkIn);
+        const co = new Date(checkOut);
+        const nights = Math.round((co - ci) / (1000*60*60*24));
+        
+        if (nights > 0) {
+            const total = (nights * pricePerNight).toFixed(0);
+            document.getElementById('priceEstimateResult').innerHTML = 
+                `<strong>${nights} nuit${nights > 1 ? 's' : ''}</strong> × ${pricePerNight} MAD = <span class="estimate-total">${total} MAD</span>`;
+            
+            document.getElementById('summaryTotal').style.display = 'block';
+            document.getElementById('totalNights').textContent = `${nights} nuit${nights > 1 ? 's' : ''}`;
+            document.getElementById('totalPrice').textContent = total + ' MAD';
+        } else if (nights <= 0) {
+            document.getElementById('priceEstimateResult').innerHTML = 
+                '<span class="text-danger"><i class="fas fa-exclamation-triangle me-1"></i>La date de départ doit être après l\'arrivée.</span>';
+        }
+    }
+}
+
+document.querySelector('[name="check_in"]').addEventListener('change', function() {
+    document.querySelector('[name="check_out"]').min = this.value;
+    updatePriceEstimate();
+});
+document.querySelector('[name="check_out"]').addEventListener('change', updatePriceEstimate);
+
+// Init if dates pre-filled
+updatePriceEstimate();
+
+// Submit button loading state
+document.getElementById('bookingForm').addEventListener('submit', function() {
+    const btn = document.getElementById('submitBtn');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Traitement en cours...';
+    btn.disabled = true;
+});
+</script>
+{% endblock %}

@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Annuler — {{ booking.reference }}{% endblock %}
+
+{% block content %}
+{% load content_tags %}{% get_hotel_info as pg_info %}
+
+<section class="page-hero" style="height:200px">
+  <div class="page-hero-overlay"></div>
+  <div style="position:absolute;inset:0;background:linear-gradient(135deg,#1A1D27,#2C2C2C)"></div>
+  <div class="container page-hero-content">
+    <nav aria-label="breadcrumb"><ol class="breadcrumb breadcrumb-light">
+      <li class="breadcrumb-item"><a href="{% url 'tracking_search' %}">Suivi</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'tracking_detail' booking.id %}">{{ booking.reference }}</a></li>
+      <li class="breadcrumb-item active">Annulation</li>
+    </ol></nav>
+    <h1 class="page-hero-title">Annuler ma réservation</h1>
+  </div>
+</section>
+
+<section class="py-5" style="background:var(--cream);min-height:60vh">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-6">
+
+        <div style="background:#fff;border-radius:14px;border:1px solid var(--border-light);box-shadow:0 2px 20px rgba(0,0,0,.06);overflow:hidden">
+
+          <!-- En-tête avertissement -->
+          <div style="background:{% if free_cancel %}linear-gradient(135deg,var(--gold),var(--gold-dark)){% else %}linear-gradient(135deg,#991B1B,#B91C1C){% endif %};padding:24px 28px;color:#fff;text-align:center">
+            <div style="width:56px;height:56px;background:rgba(255,255,255,.18);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:1.5rem">
+              {% if free_cancel %}<i class="fas fa-undo-alt"></i>{% else %}<i class="fas fa-exclamation-triangle"></i>{% endif %}
+            </div>
+            <h3 style="font-family:var(--font-serif);font-size:1.5rem;margin:0 0 4px">
+              {% if free_cancel %}Annulation gratuite{% else %}Annulation sans remboursement{% endif %}
+            </h3>
+            <p style="font-size:.85rem;opacity:.9;margin:0">
+              {% if free_cancel %}Vous avez droit à un remboursement intégral{% else %}Moins de 48h avant votre arrivée{% endif %}
+            </p>
+          </div>
+
+          <!-- Détails -->
+          <div style="padding:24px 28px">
+
+            <div style="background:var(--cream);border-radius:10px;padding:16px;margin-bottom:20px">
+              <div style="font-size:.72rem;color:#9CA3AF;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Réservation à annuler</div>
+              <div style="font-size:1rem;font-weight:600;font-family:var(--font-serif);color:var(--dark);margin-bottom:4px">
+                {{ booking.reference }} — {{ booking.room.name }}
+              </div>
+              <div style="font-size:.85rem;color:#6B7280">
+                {{ booking.check_in|date:"d/m/Y" }} → {{ booking.check_out|date:"d/m/Y" }}
+                ({{ booking.nights }} nuit{{ booking.nights|pluralize }})
+              </div>
+              <div style="font-size:.95rem;font-weight:700;color:var(--dark);margin-top:8px">
+                Montant : {{ booking.total_price|floatformat:0 }} MAD
+              </div>
+            </div>
+
+            {% if free_cancel %}
+            <div style="background:#FFF8EC;border-left:3px solid var(--gold);border-radius:4px;padding:14px 16px;margin-bottom:20px">
+              <div style="font-size:.85rem;color:var(--gold-dark);font-weight:600;margin-bottom:4px">
+                <i class="fas fa-check-circle me-1"></i>Conditions remplies
+              </div>
+              <div style="font-size:.82rem;color:#555;line-height:1.5">
+                Votre arrivée est dans plus de 48 heures. Vous bénéficiez d'une annulation gratuite.
+                {% if booking.payment and booking.payment.status == 'approved' %}
+                Un remboursement de <strong>{{ booking.total_price|floatformat:0 }} MAD</strong> sera traité sous 5-7 jours ouvrés.
+                {% endif %}
+              </div>
+            </div>
+            {% else %}
+            <div style="background:#FEF2F2;border-left:3px solid #EF4444;border-radius:4px;padding:14px 16px;margin-bottom:20px">
+              <div style="font-size:.85rem;color:#991B1B;font-weight:600;margin-bottom:4px">
+                <i class="fas fa-exclamation-circle me-1"></i>Aucun remboursement possible
+              </div>
+              <div style="font-size:.82rem;color:#7F1D1D;line-height:1.5">
+                Conformément à nos conditions, toute annulation moins de 48 heures avant l'arrivée
+                n'ouvre pas droit à un remboursement. Si vous confirmez, la réservation sera annulée
+                mais le montant ne sera pas remboursé.
+              </div>
+            </div>
+            {% endif %}
+
+            <div style="font-size:.9rem;color:var(--dark);text-align:center;margin-bottom:20px;font-weight:500">
+              Êtes-vous sûr(e) de vouloir annuler cette réservation ?
+            </div>
+
+            <form method="post" action="{% url 'tracking_cancel' booking.id %}">
+              {% csrf_token %}
+              <div style="display:flex;gap:10px">
+                <a href="{% url 'tracking_detail' booking.id %}"
+                   style="flex:1;padding:14px;background:#fff;border:1px solid var(--border-light);color:var(--dark);border-radius:10px;text-align:center;text-decoration:none;font-size:.85rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase">
+                  Retour
+                </a>
+                <button type="submit"
+                        style="flex:1;padding:14px;background:#991B1B;color:#fff;border:none;border-radius:10px;font-size:.85rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;cursor:pointer">
+                  <i class="fas fa-times me-1"></i>Confirmer l'annulation
+                </button>
+              </div>
+            </form>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

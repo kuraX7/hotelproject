@@ -1,0 +1,426 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}Tableau Réception{% endblock %}
+{% block page_title %}Tableau de Réception{% endblock %}
+{% block page_subtitle %}
+  {% if is_today %}Aujourd'hui{% else %}{{ view_date|date:"l d F Y" }}{% endif %}
+{% endblock %}
+
+{% block topbar_actions %}
+<a href="{% url 'dashboard_reception' %}?date={{ prev_date|date:'Y-m-d' }}" class="topbar-btn">
+  <i class="fas fa-chevron-left"></i>
+</a>
+<a href="{% url 'dashboard_reception' %}" class="topbar-btn {% if is_today %}primary{% endif %}">
+  <i class="fas fa-calendar-day me-1"></i>Aujourd'hui
+</a>
+<a href="{% url 'dashboard_reception' %}?date={{ next_date|date:'Y-m-d' }}" class="topbar-btn">
+  <i class="fas fa-chevron-right"></i>
+</a>
+{% endblock %}
+
+{% block content %}
+<style>
+/* ── ROOM GRID ── */
+.rec-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:14px; margin-bottom:28px; }
+
+.room-cell { border-radius:12px; border:2px solid; overflow:hidden; transition:all .2s; position:relative; }
+.room-cell:hover { transform:translateY(-3px); box-shadow:0 8px 24px rgba(0,0,0,.12); }
+
+/* Status colors */
+.status-free        { border-color:#D1FAE5; background:#F0FFF4; }
+.status-occupied    { border-color:#FEE2E2; background:#FFF5F5; }
+.status-arriving    { border-color:#BFDBFE; background:#EFF6FF; }
+.status-checkout    { border-color:#E9D5FF; background:#FAF5FF; }
+.status-departing   { border-color:#FDE68A; background:#FFFBEB; }
+.status-maintenance { border-color:#E5E7EB; background:#F9FAFB; }
+
+/* Status strip at top */
+.room-strip { height:5px; }
+.status-free        .room-strip { background:#10B981; }
+.status-occupied    .room-strip { background:#EF4444; }
+.status-arriving    .room-strip { background:#3B82F6; }
+.status-checkout    .room-strip { background:#8B5CF6; }
+.status-departing   .room-strip { background:#F59E0B; }
+.status-maintenance .room-strip { background:#D1D5DB; }
+
+.room-cell-body { padding:14px; }
+.room-number { font-size:.65rem; font-weight:700; letter-spacing:.15em; text-transform:uppercase; color:#9CA3AF; margin-bottom:3px; }
+.room-name   { font-weight:700; font-size:.9rem; color:#111; line-height:1.2; margin-bottom:6px; }
+.room-status-badge { display:inline-flex; align-items:center; gap:5px; padding:3px 10px; border-radius:20px; font-size:.68rem; font-weight:600; }
+.badge-free        { background:#D1FAE5; color:#065F46; }
+.badge-occupied    { background:#FEE2E2; color:#991B1B; }
+.badge-arriving    { background:#DBEAFE; color:#1E40AF; }
+.badge-checkout    { background:#EDE9FE; color:#5B21B6; }
+.badge-departing   { background:#FEF3C7; color:#92400E; }
+.badge-maintenance { background:#F3F4F6; color:#6B7280; }
+
+.room-guest { margin-top:8px; padding-top:8px; border-top:1px solid rgba(0,0,0,.06); }
+.room-guest-name { font-size:.82rem; font-weight:600; color:#111; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.room-guest-sub  { font-size:.7rem; color:#6B7280; margin-top:1px; }
+.room-nights-bar { margin-top:8px; }
+.room-nights-track { height:4px; background:#E5E7EB; border-radius:2px; overflow:hidden; }
+.room-nights-fill  { height:100%; border-radius:2px; background:linear-gradient(90deg,#C9A96E,#A8854A); transition:width .3s; }
+.room-nights-label { font-size:.65rem; color:#9CA3AF; margin-top:3px; }
+
+.room-cell-footer { padding:8px 14px; border-top:1px solid rgba(0,0,0,.06); display:flex; justify-content:space-between; align-items:center; gap:6px; }
+.room-next-info  { font-size:.68rem; color:#9CA3AF; display:flex; align-items:center; gap:4px; }
+
+/* ── ACTION DOTS MENU ── */
+.room-actions-btn { background:none; border:none; cursor:pointer; color:#9CA3AF; padding:2px 6px; border-radius:4px; font-size:.75rem; }
+.room-actions-btn:hover { background:rgba(0,0,0,.06); color:#374151; }
+
+/* ── LEGEND ── */
+.rec-legend { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:20px; }
+.legend-item { display:flex; align-items:center; gap:6px; font-size:.75rem; color:#6B7280; }
+.legend-dot  { width:10px; height:10px; border-radius:3px; flex-shrink:0; }
+
+/* ── SIDE PANELS ── */
+.side-panel { background:#fff; border:1px solid #E5E7EB; border-radius:12px; overflow:hidden; margin-bottom:16px; }
+.side-panel-head { padding:12px 16px; border-bottom:1px solid #F3F4F6; display:flex; align-items:center; gap:8px; }
+.side-panel-title { font-size:.82rem; font-weight:600; color:#111; }
+.side-panel-count { background:#F3F4F6; color:#6B7280; font-size:.68rem; font-weight:600; padding:2px 8px; border-radius:20px; }
+.side-panel-body  { }
+
+.guest-row { padding:11px 16px; border-bottom:1px solid #F9FAFB; display:flex; align-items:center; gap:10px; }
+.guest-row:last-child { border-bottom:none; }
+.guest-avatar { width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:.72rem; font-weight:700; color:#fff; flex-shrink:0; }
+.avatar-arrive { background:linear-gradient(135deg,#3B82F6,#1D4ED8); }
+.avatar-depart { background:linear-gradient(135deg,#8B5CF6,#6D28D9); }
+.guest-info { flex:1; min-width:0; }
+.guest-name  { font-size:.83rem; font-weight:600; color:#111; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.guest-room  { font-size:.72rem; color:#9CA3AF; }
+.guest-badge { font-size:.65rem; font-weight:600; padding:2px 8px; border-radius:20px; white-space:nowrap; flex-shrink:0; }
+.badge-in  { background:#DBEAFE; color:#1E40AF; }
+.badge-out { background:#EDE9FE; color:#5B21B6; }
+
+/* ── 7-DAY TIMELINE ── */
+.timeline-row { display:flex; gap:6px; overflow-x:auto; padding:14px 16px; }
+.timeline-day { min-width:64px; flex:1; text-align:center; }
+.timeline-day-label { font-size:.62rem; color:#9CA3AF; letter-spacing:.05em; text-transform:uppercase; margin-bottom:4px; }
+.timeline-day-date  { font-size:.78rem; font-weight:600; color:#111; margin-bottom:6px; }
+.timeline-day-date.today { color:#C9A96E; }
+.timeline-bar-wrap { height:40px; background:#F3F4F6; border-radius:4px; overflow:hidden; position:relative; }
+.timeline-bar { position:absolute; bottom:0; left:0; right:0; border-radius:4px; transition:height .3s; }
+.timeline-meta { font-size:.6rem; color:#9CA3AF; margin-top:4px; display:flex; justify-content:center; gap:4px; }
+.tm-arr { color:#3B82F6; font-weight:700; }
+.tm-dep { color:#8B5CF6; font-weight:700; }
+
+/* ── STAT BADGES ── */
+.occ-badge { display:inline-flex; align-items:center; gap:5px; padding:6px 14px; border-radius:20px; font-size:.78rem; font-weight:600; }
+</style>
+
+<!-- OCCUPANCY STATS BAR -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-3">
+    <div class="stat-card">
+      <div class="stat-icon green"><i class="fas fa-door-open"></i></div>
+      <div>
+        <div class="stat-value">{{ free_count }}</div>
+        <div class="stat-label">Chambres libres</div>
+        <span class="stat-badge up">{{ occupancy_rate }}% occupé</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="stat-card">
+      <div class="stat-icon red"><i class="fas fa-user"></i></div>
+      <div>
+        <div class="stat-value">{{ occupied_count }}</div>
+        <div class="stat-label">Chambres occupées</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="stat-card">
+      <div class="stat-icon blue"><i class="fas fa-plane-arrival"></i></div>
+      <div>
+        <div class="stat-value">{{ arrivals_list|length }}</div>
+        <div class="stat-label">Arrivées {% if is_today %}aujourd'hui{% else %}ce jour{% endif %}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="stat-card">
+      <div class="stat-icon purple"><i class="fas fa-plane-departure"></i></div>
+      <div>
+        <div class="stat-value">{{ departures_list|length }}</div>
+        <div class="stat-label">Départs {% if is_today %}aujourd'hui{% else %}ce jour{% endif %}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- LEFT: Room Grid -->
+  <div class="col-xl-8">
+
+    <!-- Legend -->
+    <div class="rec-legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#10B981"></div>Libre</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#EF4444"></div>Occupée</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#3B82F6"></div>Arrivée{% if is_today %} aujourd'hui{% endif %}</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#8B5CF6"></div>Départ{% if is_today %} aujourd'hui{% endif %}</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#F59E0B"></div>Arrivée + Départ</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#D1D5DB"></div>Maintenance</div>
+    </div>
+
+    <!-- Room Cards Grid -->
+    <div class="rec-grid">
+      {% for rd in room_data %}
+      {% with room=rd.room b=rd.booking %}
+      <div class="room-cell status-{{ rd.status }}">
+        <div class="room-strip"></div>
+        <div class="room-cell-body">
+          <!-- Header row -->
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px">
+            <div>
+              <div class="room-number">{{ room.get_category_display }}</div>
+              <div class="room-name">{{ room.name|truncatechars:22 }}</div>
+            </div>
+            <!-- Quick status form -->
+            <form method="post" action="{% url 'dashboard_room_quick_status' room.id %}" style="flex-shrink:0">
+              {% csrf_token %}
+              <select name="status" class="form-select form-select-sm"
+                onchange="this.form.submit()"
+                style="font-size:.68rem;border-radius:20px;padding:3px 8px;min-width:110px;
+                background:{% if room.status == 'available' %}#D1FAE5{% elif room.status == 'occupied' %}#FEE2E2{% else %}#FEF3C7{% endif %};
+                border-color:transparent;font-weight:600;
+                color:{% if room.status == 'available' %}#065F46{% elif room.status == 'occupied' %}#991B1B{% else %}#92400E{% endif %}">
+                {% for v,l in room.STATUS_CHOICES %}
+                <option value="{{ v }}" {% if room.status == v %}selected{% endif %}>{{ l }}</option>
+                {% endfor %}
+              </select>
+            </form>
+          </div>
+
+          <!-- Status badge -->
+          <div>
+            <span class="room-status-badge badge-{{ rd.status }}">
+              {% if rd.status == 'free' %}<i class="fas fa-check-circle"></i> Libre
+              {% elif rd.status == 'occupied' %}<i class="fas fa-user"></i> Occupée
+              {% elif rd.status == 'arriving' %}<i class="fas fa-plane-arrival"></i> Arrivée
+              {% elif rd.status == 'departing' %}<i class="fas fa-exchange-alt"></i> Arrivée + Départ
+              {% elif rd.status == 'checkout' %}<i class="fas fa-plane-departure"></i> Départ
+              {% elif rd.status == 'maintenance' %}<i class="fas fa-tools"></i> Maintenance
+              {% endif %}
+            </span>
+          </div>
+
+          <!-- Guest info if occupied/arriving/departing -->
+          {% if b %}
+          <div class="room-guest">
+            <div class="room-guest-name">{{ b.name }}</div>
+            <div class="room-guest-sub">
+              <i class="fas fa-users me-1"></i>{{ b.guests }} pers.
+              · {{ b.check_in|date:"d/m" }} → {{ b.check_out|date:"d/m" }}
+            </div>
+            {% if b.special_requests %}
+            <div style="margin-top:4px;font-size:.68rem;color:#F59E0B;display:flex;align-items:center;gap:4px">
+              <i class="fas fa-sticky-note"></i>{{ b.special_requests|truncatechars:35 }}
+            </div>
+            {% endif %}
+            <!-- Stay progress bar -->
+            {% if rd.nights_in and rd.total_nights %}
+            <div class="room-nights-bar">
+              <div class="room-nights-track">
+                <div class="room-nights-fill" style="width:{% widthratio rd.nights_in rd.total_nights 100 %}%"></div>
+              </div>
+              <div class="room-nights-label">Nuit {{ rd.nights_in }}/{{ rd.total_nights }}</div>
+            </div>
+            {% endif %}
+          </div>
+          {% elif rd.arrival %}
+          <div class="room-guest">
+            <div class="room-guest-name">{{ rd.arrival.name }}</div>
+            <div class="room-guest-sub">
+              <i class="fas fa-users me-1"></i>{{ rd.arrival.guests }} pers.
+              · {{ rd.arrival.nights }} nuit{{ rd.arrival.nights|pluralize }}
+            </div>
+            {% if rd.arrival.special_requests %}
+            <div style="margin-top:4px;font-size:.68rem;color:#F59E0B;display:flex;align-items:center;gap:4px">
+              <i class="fas fa-sticky-note"></i>{{ rd.arrival.special_requests|truncatechars:35 }}
+            </div>
+            {% endif %}
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Footer: next booking info -->
+        <div class="room-cell-footer">
+          {% if rd.status == 'free' and rd.next_booking %}
+          <div class="room-next-info">
+            <i class="fas fa-clock" style="color:#C9A96E"></i>
+            Prochain : {{ rd.next_booking.check_in|date:"d/m" }} ({{ rd.next_booking.name|truncatechars:12 }})
+          </div>
+          {% elif rd.status == 'free' %}
+          <div class="room-next-info" style="color:#10B981"><i class="fas fa-check"></i> Aucune réservation</div>
+          {% elif rd.departure %}
+          <div class="room-next-info"><i class="fas fa-sign-out-alt" style="color:#8B5CF6"></i> Check-out {{ rd.departure.check_out|date:"d/m" }}</div>
+          {% else %}
+          <div class="room-next-info">
+            <i class="fas fa-calendar"></i>
+            {% if b %}Jusqu'au {{ b.check_out|date:"d/m/Y" }}{% endif %}
+          </div>
+          {% endif %}
+          <!-- Quick link -->
+          {% if b %}
+          <a href="{% url 'dashboard_bookings' %}?q={{ b.name }}" class="btn-icon" title="Voir réservation" style="width:26px;height:26px;font-size:.65rem">
+            <i class="fas fa-eye"></i>
+          </a>
+          {% endif %}
+        </div>
+      </div>
+      {% endwith %}
+      {% endfor %}
+    </div>
+
+    <!-- 7-Day Timeline -->
+    <div class="data-card">
+      <div class="data-card-header">
+        <div class="data-card-title"><i class="fas fa-chart-bar"></i> Planning 7 jours</div>
+        <span style="font-size:.75rem;color:#9CA3AF">Taux d'occupation prévu</span>
+      </div>
+      <div class="timeline-row">
+        {% for day in timeline_data %}
+        <div class="timeline-day">
+          <div class="timeline-day-label">{{ day.date|date:"D"|slice:":3" }}</div>
+          <div class="timeline-day-date {% if day.date == today %}today{% endif %}">{{ day.date|date:"d/m" }}</div>
+          <div class="timeline-bar-wrap" title="{{ day.rate }}% occupé">
+            <div class="timeline-bar"
+              style="height:{{ day.rate }}%;background:{% if day.rate >= 80 %}linear-gradient(180deg,#EF4444,#DC2626){% elif day.rate >= 50 %}linear-gradient(180deg,#C9A96E,#A8854A){% else %}linear-gradient(180deg,#10B981,#059669){% endif %}">
+            </div>
+          </div>
+          <div style="font-size:.65rem;font-weight:700;color:{% if day.rate >= 80 %}#EF4444{% elif day.rate >= 50 %}#C9A96E{% else %}#10B981{% endif %};text-align:center;margin-top:3px">{{ day.rate }}%</div>
+          <div class="timeline-meta">
+            {% if day.arrivals %}<span class="tm-arr">+{{ day.arrivals }}</span>{% endif %}
+            {% if day.departures %}<span class="tm-dep">-{{ day.departures }}</span>{% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Arrivals + Departures panels -->
+  <div class="col-xl-4">
+
+    <!-- ARRIVALS -->
+    <div class="side-panel">
+      <div class="side-panel-head" style="background:#EFF6FF">
+        <i class="fas fa-plane-arrival" style="color:#3B82F6"></i>
+        <span class="side-panel-title">Arrivées</span>
+        <span class="side-panel-count" style="background:#DBEAFE;color:#1E40AF">{{ arrivals_list|length }}</span>
+        <span style="font-size:.7rem;color:#6B7280;margin-left:auto">{{ view_date|date:"d/m" }}</span>
+      </div>
+      <div class="side-panel-body">
+        {% for b in arrivals_list %}
+        <div class="guest-row">
+          <div class="guest-avatar avatar-arrive">{{ b.name|first|upper }}</div>
+          <div class="guest-info">
+            <div class="guest-name">{{ b.name }}</div>
+            <div class="guest-room">{{ b.room.name|truncatechars:22 }}</div>
+            <div style="font-size:.7rem;color:#9CA3AF;margin-top:2px">
+              <i class="fas fa-users me-1"></i>{{ b.guests }} pers.
+              <i class="fas fa-moon ms-2 me-1"></i>{{ b.nights }} nuit{{ b.nights|pluralize }}
+            </div>
+            {% if b.special_requests %}
+            <div style="font-size:.68rem;color:#F59E0B;margin-top:2px;display:flex;align-items:center;gap:3px">
+              <i class="fas fa-sticky-note"></i>{{ b.special_requests|truncatechars:30 }}
+            </div>
+            {% endif %}
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
+            <span class="guest-badge badge-in">CHECK-IN</span>
+            <span style="font-size:.68rem;color:#9CA3AF">→ {{ b.check_out|date:"d/m" }}</span>
+          </div>
+        </div>
+        {% empty %}
+        <div style="padding:24px;text-align:center;color:#9CA3AF">
+          <i class="fas fa-check-circle" style="font-size:1.5rem;margin-bottom:6px;display:block;color:#D1FAE5"></i>
+          <div style="font-size:.82rem">Aucune arrivée prévue</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- DEPARTURES -->
+    <div class="side-panel">
+      <div class="side-panel-head" style="background:#FAF5FF">
+        <i class="fas fa-plane-departure" style="color:#8B5CF6"></i>
+        <span class="side-panel-title">Départs</span>
+        <span class="side-panel-count" style="background:#EDE9FE;color:#5B21B6">{{ departures_list|length }}</span>
+        <span style="font-size:.7rem;color:#6B7280;margin-left:auto">{{ view_date|date:"d/m" }}</span>
+      </div>
+      <div class="side-panel-body">
+        {% for b in departures_list %}
+        <div class="guest-row">
+          <div class="guest-avatar avatar-depart">{{ b.name|first|upper }}</div>
+          <div class="guest-info">
+            <div class="guest-name">{{ b.name }}</div>
+            <div class="guest-room">{{ b.room.name|truncatechars:22 }}</div>
+            <div style="font-size:.7rem;color:#9CA3AF;margin-top:2px">
+              <i class="fas fa-calendar-check me-1"></i>Arrivé le {{ b.check_in|date:"d/m" }}
+              <i class="fas fa-moon ms-2 me-1"></i>{{ b.nights }} nuit{{ b.nights|pluralize }}
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
+            <span class="guest-badge badge-out">CHECK-OUT</span>
+            <span style="font-size:.68rem;color:#9CA3AF">{{ b.total_price|floatformat:0 }} MAD</span>
+          </div>
+        </div>
+        {% empty %}
+        <div style="padding:24px;text-align:center;color:#9CA3AF">
+          <i class="fas fa-check-circle" style="font-size:1.5rem;margin-bottom:6px;display:block;color:#EDE9FE"></i>
+          <div style="font-size:.82rem">Aucun départ prévu</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- QUICK STATS -->
+    <div class="data-card">
+      <div class="data-card-header">
+        <div class="data-card-title"><i class="fas fa-chart-pie"></i> Occupation</div>
+        <span style="font-size:.75rem;color:#9CA3AF">{{ view_date|date:"d/m/Y" }}</span>
+      </div>
+      <div style="padding:16px">
+        <!-- Occupancy ring (visual) -->
+        <div style="text-align:center;margin-bottom:16px">
+          <div style="position:relative;display:inline-block">
+            <svg width="110" height="110" viewBox="0 0 110 110">
+              <circle cx="55" cy="55" r="46" fill="none" stroke="#F3F4F6" stroke-width="10"/>
+              <circle cx="55" cy="55" r="46" fill="none" stroke="#C9A96E" stroke-width="10"
+                stroke-dasharray="{{ occupancy_rate|floatformat:0 }} 100" stroke-dashoffset="25"
+                stroke-linecap="round" transform="rotate(-90 55 55)"
+                style="stroke-dasharray:{% widthratio occupancy_rate 100 289 %} 289"/>
+            </svg>
+            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center">
+              <div style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:700;color:#111;line-height:1">{{ occupancy_rate }}%</div>
+              <div style="font-size:.6rem;color:#9CA3AF;letter-spacing:.05em">OCCUPÉ</div>
+            </div>
+          </div>
+        </div>
+        <!-- Detail rows -->
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="display:flex;align-items:center;gap:6px;font-size:.8rem;color:#555"><span style="width:10px;height:10px;border-radius:3px;background:#EF4444;flex-shrink:0"></span>Occupées</span>
+            <span style="font-weight:700;color:#111;font-size:.88rem">{{ occupied_count }}/{{ total_rooms }}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="display:flex;align-items:center;gap:6px;font-size:.8rem;color:#555"><span style="width:10px;height:10px;border-radius:3px;background:#10B981;flex-shrink:0"></span>Libres</span>
+            <span style="font-weight:700;color:#111;font-size:.88rem">{{ free_count }}/{{ total_rooms }}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding-top:8px;border-top:1px solid #F3F4F6">
+            <span style="font-size:.8rem;color:#555"><i class="fas fa-plane-arrival me-2" style="color:#3B82F6"></i>Arrivées</span>
+            <span style="font-weight:700;color:#3B82F6;font-size:.88rem">{{ arrivals_list|length }}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:.8rem;color:#555"><i class="fas fa-plane-departure me-2" style="color:#8B5CF6"></i>Départs</span>
+            <span style="font-weight:700;color:#8B5CF6;font-size:.88rem">{{ departures_list|length }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,395 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}Promotions{% endblock %}
+{% block page_title %}Promotions{% endblock %}
+{% block page_subtitle %}{{ promotions|length }} promotion{{ promotions|length|pluralize }}{% endblock %}
+{% block topbar_actions %}
+<button class="topbar-btn primary" onclick="document.getElementById('addModal').style.display='flex'">
+  <i class="fas fa-plus"></i> Nouvelle promotion
+</button>
+{% endblock %}
+
+{% block content %}
+<style>
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;align-items:center;justify-content:center;padding:16px}
+.modal-box{background:#fff;border-radius:16px;width:100%;max-width:580px;max-height:92vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.35)}
+.modal-head{padding:20px 24px;border-bottom:1px solid #F3F4F6;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;z-index:1;border-radius:16px 16px 0 0}
+.modal-body{padding:20px 24px}
+.modal-foot{padding:16px 24px;border-top:1px solid #F3F4F6;display:flex;gap:10px;justify-content:flex-end;position:sticky;bottom:0;background:#fff}
+.close-btn{background:none;border:none;font-size:1.5rem;cursor:pointer;color:#9CA3AF;line-height:1;padding:0 4px}
+.close-btn:hover{color:#111}
+
+/* Promo card */
+.promo-card{background:#fff;border:1px solid #E5E7EB;border-radius:14px;overflow:hidden;transition:all .25s;position:relative}
+.promo-card:hover{box-shadow:0 8px 32px rgba(0,0,0,.1);transform:translateY(-3px)}
+.promo-img{width:100%;height:180px;object-fit:cover;display:block}
+.promo-img-placeholder{width:100%;height:180px;display:flex;align-items:center;justify-content:center;font-size:2.5rem;color:#D1D5DB}
+.promo-badge{position:absolute;top:14px;left:14px;padding:5px 14px;border-radius:20px;font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+.discount-pill{position:absolute;top:14px;right:14px;background:rgba(0,0,0,.75);color:#fff;font-size:.75rem;font-weight:700;padding:5px 12px;border-radius:20px;backdrop-filter:blur(4px)}
+.promo-body{padding:16px}
+.promo-title{font-size:.95rem;font-weight:700;color:#111;margin-bottom:3px;line-height:1.3}
+.promo-subtitle{font-size:.78rem;color:#6B7280;margin-bottom:8px}
+.promo-desc{font-size:.78rem;color:#555;line-height:1.6;margin-bottom:10px}
+.promo-meta{display:flex;flex-wrap:wrap;gap:6px;font-size:.7rem;color:#9CA3AF;margin-bottom:10px}
+.promo-meta-item{display:flex;align-items:center;gap:4px;background:#F3F4F6;padding:3px 8px;border-radius:20px}
+.promo-footer{padding:12px 16px;border-top:1px solid #F3F4F6;display:flex;gap:8px}
+.days-badge{display:inline-flex;align-items:center;gap:4px;font-size:.68rem;font-weight:600}
+
+/* Status indicator */
+.status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+</style>
+
+<!-- Stats rapides -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="stat-card">
+      <div class="stat-icon gold"><i class="fas fa-tags"></i></div>
+      <div>
+        <div class="stat-value">{{ promotions|length }}</div>
+        <div class="stat-label">Total promotions</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card">
+      <div class="stat-icon green"><i class="fas fa-check-circle"></i></div>
+      <div>
+        <div class="stat-value" id="active-count">0</div>
+        <div class="stat-label">Actives</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card">
+      <div class="stat-icon blue"><i class="fas fa-eye"></i></div>
+      <div>
+        <div class="stat-value" id="featured-count">0</div>
+        <div class="stat-label">Sur l'accueil</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card">
+      <div class="stat-icon red"><i class="fas fa-clock"></i></div>
+      <div>
+        <div class="stat-value" id="expiring-count">0</div>
+        <div class="stat-label">Expirent bientôt</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Grid promotions -->
+{% if promotions %}
+<div class="row g-4" id="promosGrid">
+  {% for p in promotions %}
+  {% with badge_colors=p.get_badge_display_color %}
+  <div class="col-xl-4 col-lg-6"
+    data-active="{{ p.is_active|yesno:'1,0' }}"
+    data-featured="{{ p.is_featured|yesno:'1,0' }}"
+    data-expiring="{% if p.days_remaining is not None and p.days_remaining <= 7 %}1{% else %}0{% endif %}">
+    <div class="promo-card h-100">
+
+      <!-- Image -->
+      {% if p.get_image %}
+      <img src="{{ p.get_image }}" class="promo-img" alt="{{ p.title }}">
+      {% else %}
+      <div class="promo-img-placeholder" style="background:linear-gradient(135deg,#1A1D27,#2C2C2C)">
+        <i class="fas fa-tag" style="color:#C9A96E"></i>
+      </div>
+      {% endif %}
+
+      <!-- Badge -->
+      <span class="promo-badge" style="background:{{ badge_colors.0 }};color:{{ badge_colors.1 }}">
+        {{ p.get_badge_display }}
+      </span>
+
+      <!-- Discount pill -->
+      {% if p.discount_label %}
+      <span class="discount-pill">{{ p.discount_label }}</span>
+      {% elif p.discount_pct %}
+      <span class="discount-pill">-{{ p.discount_pct }}%</span>
+      {% endif %}
+
+      <!-- Status bar -->
+      <div style="padding:8px 14px;background:#F9FAFB;border-bottom:1px solid #F3F4F6;display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="status-dot" style="background:{% if p.is_valid_now %}#10B981{% else %}#EF4444{% endif %}"></div>
+          <span style="font-size:.73rem;font-weight:500;color:{% if p.is_valid_now %}#065F46{% else %}#991B1B{% endif %}">
+            {% if p.is_valid_now %}Active{% else %}Inactive{% endif %}
+          </span>
+          {% if p.days_remaining is not None %}
+          <span class="days-badge" style="color:{% if p.days_remaining <= 2 %}#EF4444{% elif p.days_remaining <= 7 %}#F59E0B{% else %}#6B7280{% endif %}">
+            <i class="fas fa-clock" style="font-size:.6rem"></i>
+            {% if p.days_remaining == 0 %}Expire aujourd'hui{% else %}{{ p.days_remaining }}j restants{% endif %}
+          </span>
+          {% endif %}
+        </div>
+        <label class="toggle-switch" title="Activer/désactiver">
+          <input type="checkbox" id="ptoggle-{{ p.id }}"
+            {% if p.is_active %}checked{% endif %}
+            onchange="togglePromo({{ p.id }}, this)">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="promo-body">
+        <div class="promo-title">{{ p.title }}</div>
+        {% if p.subtitle %}<div class="promo-subtitle">{{ p.subtitle }}</div>{% endif %}
+        <div class="promo-desc">{{ p.description|truncatechars:100 }}</div>
+        <div class="promo-meta">
+          {% if p.room %}<span class="promo-meta-item"><i class="fas fa-bed"></i>{{ p.room.name|truncatechars:20 }}</span>{% endif %}
+          {% if p.valid_from %}<span class="promo-meta-item"><i class="fas fa-calendar-check"></i>Du {{ p.valid_from|date:"d/m/Y" }}</span>{% endif %}
+          {% if p.valid_until %}<span class="promo-meta-item"><i class="fas fa-calendar-times"></i>Au {{ p.valid_until|date:"d/m/Y" }}</span>{% endif %}
+          <span class="promo-meta-item">
+            <i class="fas fa-{% if p.is_featured %}eye{% else %}eye-slash{% endif %}"></i>
+            {% if p.is_featured %}Visible accueil{% else %}Masquée{% endif %}
+          </span>
+        </div>
+      </div>
+
+      <div class="promo-footer">
+        <button onclick="openEditModal(
+            {{ p.id }},
+            '{{ p.title|escapejs }}',
+            '{{ p.subtitle|escapejs }}',
+            '{{ p.description|escapejs }}',
+            '{{ p.badge }}',
+            {{ p.discount_pct }},
+            '{{ p.discount_label|escapejs }}',
+            '{{ p.image_url|escapejs }}',
+            {% if p.room %}{{ p.room.id }}{% else %}''{% endif %},
+            '{{ p.cta_text|escapejs }}',
+            '{% if p.valid_from %}{{ p.valid_from|date:"Y-m-d" }}{% endif %}',
+            '{% if p.valid_until %}{{ p.valid_until|date:"Y-m-d" }}{% endif %}',
+            {{ p.is_active|yesno:'true,false' }},
+            {{ p.is_featured|yesno:'true,false' }},
+            {{ p.order }}
+          )"
+          class="btn-gold" style="flex:1;justify-content:center;padding:8px;font-size:.78rem">
+          <i class="fas fa-edit me-1"></i>Modifier
+        </button>
+        <a href="{{ p.room.get_absolute_url }}" target="_blank" class="btn-icon" title="Voir la chambre" {% if not p.room %}style="pointer-events:none;opacity:.4"{% endif %}>
+          <i class="fas fa-external-link-alt"></i>
+        </a>
+        <form method="post" action="{% url 'dashboard_promotion_delete' p.id %}"
+          onsubmit="return confirm('Supprimer la promotion « {{ p.title }} » ?')">
+          {% csrf_token %}
+          <button type="submit" class="btn-icon danger" title="Supprimer"><i class="fas fa-trash"></i></button>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endwith %}
+  {% endfor %}
+</div>
+{% else %}
+<div class="data-card">
+  <div class="empty-state">
+    <i class="fas fa-tags" style="font-size:3rem;color:#E5E7EB;margin-bottom:16px;display:block"></i>
+    <h5 style="color:#374151;margin-bottom:8px">Aucune promotion pour le moment</h5>
+    <p style="font-size:.85rem;color:#6B7280;margin-bottom:20px">Créez votre première promotion pour attirer vos clients.</p>
+    <button onclick="document.getElementById('addModal').style.display='flex'" class="btn-gold px-4">
+      <i class="fas fa-plus me-2"></i>Créer une promotion
+    </button>
+  </div>
+</div>
+{% endif %}
+
+
+<!-- ══════════════════════════════════════════ -->
+<!-- MODAL AJOUTER -->
+<!-- ══════════════════════════════════════════ -->
+<div class="modal-overlay" id="addModal" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h6 style="margin:0;font-weight:700;font-size:1rem"><i class="fas fa-plus-circle me-2" style="color:#C9A96E"></i>Nouvelle promotion</h6>
+      <button class="close-btn" onclick="document.getElementById('addModal').style.display='none'">×</button>
+    </div>
+    <form method="post" action="{% url 'dashboard_promotion_add' %}" enctype="multipart/form-data">
+      {% csrf_token %}
+      {% include 'dashboard/promo_form_fields.html' with prefix="add" %}
+      <div class="modal-foot">
+        <button type="button" class="topbar-btn" onclick="document.getElementById('addModal').style.display='none'">Annuler</button>
+        <button type="submit" class="btn-gold"><i class="fas fa-save me-2"></i>Créer la promotion</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- MODAL MODIFIER -->
+<!-- ══════════════════════════════════════════ -->
+<div class="modal-overlay" id="editModal" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h6 style="margin:0;font-weight:700;font-size:1rem"><i class="fas fa-edit me-2" style="color:#C9A96E"></i>Modifier la promotion</h6>
+      <button class="close-btn" onclick="document.getElementById('editModal').style.display='none'">×</button>
+    </div>
+    <form method="post" id="editPromoForm" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label">Titre <span style="color:#EF4444">*</span></label>
+            <input type="text" name="title" id="ep_title" class="form-control" required>
+          </div>
+          <div class="col-12">
+            <label class="form-label">Sous-titre</label>
+            <input type="text" name="subtitle" id="ep_subtitle" class="form-control" placeholder="Ex: Séjour romantique en Suite Royale">
+          </div>
+          <div class="col-12">
+            <label class="form-label">Description <span style="color:#EF4444">*</span></label>
+            <textarea name="description" id="ep_desc" class="form-control" rows="3" required></textarea>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Badge</label>
+            <select name="badge" id="ep_badge" class="form-select">
+              {% for val, lbl in badge_choices %}
+              <option value="{{ val }}">{{ lbl }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Réduction (%)</label>
+            <input type="number" name="discount_pct" id="ep_pct" class="form-control" min="0" max="100" placeholder="0">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Ordre</label>
+            <input type="number" name="order" id="ep_order" class="form-control" min="0">
+          </div>
+          <div class="col-12">
+            <label class="form-label">Label réduction</label>
+            <input type="text" name="discount_label" id="ep_label" class="form-control" placeholder="Ex: -20% + Champagne offert">
+          </div>
+          <div class="col-12">
+            <label class="form-label">Chambre liée (optionnel)</label>
+            <select name="room" id="ep_room" class="form-select">
+              <option value="">— Aucune chambre spécifique —</option>
+              {% for r in rooms %}
+              <option value="{{ r.id }}">{{ r.name }} ({{ r.price|floatformat:0 }} MAD/nuit)</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-12">
+            <label class="form-label">Texte du bouton CTA</label>
+            <input type="text" name="cta_text" id="ep_cta" class="form-control" placeholder="En profiter">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Valable du</label>
+            <input type="date" name="valid_from" id="ep_vf" class="form-control">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Valable jusqu'au</label>
+            <input type="date" name="valid_until" id="ep_vu" class="form-control">
+          </div>
+          <div class="col-12">
+            <label class="form-label">URL image</label>
+            <input type="url" name="image_url" id="ep_img" class="form-control" placeholder="https://images.unsplash.com/..." oninput="prevImg('ep_prev',this.value)">
+          </div>
+          <div class="col-12">
+            <label class="form-label">Upload image</label>
+            <input type="file" name="image_file" class="form-control" accept="image/*" onchange="prevFile('ep_prev',this)">
+          </div>
+          <div id="ep_prev_wrap" style="display:none" class="col-12">
+            <img id="ep_prev" style="width:100%;height:140px;object-fit:cover;border-radius:8px;border:2px solid #C9A96E">
+          </div>
+          <div class="col-6">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.85rem;padding:10px;background:#F9FAFB;border-radius:8px;border:1px solid #E5E7EB">
+              <input type="checkbox" name="is_active" id="ep_active" style="width:16px;height:16px;accent-color:#10B981">
+              Promotion active
+            </label>
+          </div>
+          <div class="col-6">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.85rem;padding:10px;background:#F9FAFB;border-radius:8px;border:1px solid #E5E7EB">
+              <input type="checkbox" name="is_featured" id="ep_featured" style="width:16px;height:16px;accent-color:#C9A96E">
+              Afficher sur l'accueil
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="topbar-btn" onclick="document.getElementById('editModal').style.display='none'">Annuler</button>
+        <button type="submit" class="btn-gold"><i class="fas fa-save me-2"></i>Enregistrer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Compute stats
+document.addEventListener('DOMContentLoaded', () => {
+  const cards = document.querySelectorAll('#promosGrid > div[data-active]');
+  let active=0, featured=0, expiring=0;
+  cards.forEach(c => {
+    if (c.dataset.active === '1') active++;
+    if (c.dataset.featured === '1') featured++;
+    if (c.dataset.expiring === '1') expiring++;
+  });
+  document.getElementById('active-count').textContent = active;
+  document.getElementById('featured-count').textContent = featured;
+  document.getElementById('expiring-count').textContent = expiring;
+});
+
+function togglePromo(id, cb) {
+  fetch('/dashboard/promotions/' + id + '/toggle/', {
+    method: 'POST',
+    headers: {'X-CSRFToken': '{{ csrf_token }}'}
+  }).then(r => r.json()).then(d => {
+    // Update dot color
+    const card = cb.closest('.promo-card');
+    const dot = card.querySelector('.status-dot');
+    const label = dot.nextElementSibling;
+    dot.style.background = d.is_active ? '#10B981' : '#EF4444';
+    label.textContent = d.is_active ? 'Active' : 'Inactive';
+    label.style.color  = d.is_active ? '#065F46' : '#991B1B';
+  }).catch(() => cb.checked = !cb.checked);
+}
+
+function openEditModal(id, title, subtitle, desc, badge, pct, label, imgUrl, roomId, cta, vf, vu, active, featured, order) {
+  document.getElementById('editPromoForm').action = '/dashboard/promotions/' + id + '/modifier/';
+  document.getElementById('ep_title').value    = title;
+  document.getElementById('ep_subtitle').value = subtitle;
+  document.getElementById('ep_desc').value     = desc;
+  document.getElementById('ep_badge').value    = badge;
+  document.getElementById('ep_pct').value      = pct;
+  document.getElementById('ep_label').value    = label;
+  document.getElementById('ep_img').value      = imgUrl;
+  document.getElementById('ep_cta').value      = cta;
+  document.getElementById('ep_vf').value       = vf;
+  document.getElementById('ep_vu').value       = vu;
+  document.getElementById('ep_active').checked   = active;
+  document.getElementById('ep_featured').checked = featured;
+  document.getElementById('ep_order').value    = order;
+  const roomSel = document.getElementById('ep_room');
+  if (roomId) roomSel.value = roomId;
+  else roomSel.value = '';
+  // image preview
+  const pw = document.getElementById('ep_prev_wrap');
+  if (imgUrl) { document.getElementById('ep_prev').src = imgUrl; pw.style.display = 'block'; }
+  else pw.style.display = 'none';
+  document.getElementById('editModal').style.display = 'flex';
+}
+
+function prevImg(previewId, url) {
+  const img = document.getElementById(previewId);
+  const wrap = document.getElementById(previewId + '_wrap');
+  if (url && img && wrap) { img.src = url; wrap.style.display = 'block'; }
+  else if (wrap) wrap.style.display = 'none';
+}
+function prevFile(previewId, input) {
+  if (input.files && input.files[0]) {
+    const r = new FileReader();
+    r.onload = e => {
+      const img = document.getElementById(previewId);
+      const wrap = document.getElementById(previewId + '_wrap');
+      if (img) img.src = e.target.result;
+      if (wrap) wrap.style.display = 'block';
+    };
+    r.readAsDataURL(input.files[0]);
+  }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,333 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}Médiathèque{% endblock %}
+{% block page_title %}Médiathèque{% endblock %}
+{% block page_subtitle %}Gestion de toutes les images du site{% endblock %}
+
+{% block content %}
+<style>
+.img-section { margin-bottom: 36px; }
+.img-section-title { font-size:.8rem; font-weight:600; color:#6B7280; text-transform:uppercase; letter-spacing:.1em; margin-bottom:14px; display:flex; align-items:center; gap:8px; padding-bottom:10px; border-bottom:1px solid #F3F4F6; }
+.img-section-title i { color:#C9A96E; }
+.img-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:12px; }
+.img-card { background:#fff; border:1px solid #E5E7EB; border-radius:10px; overflow:hidden; transition:all .2s; position:relative; }
+.img-card:hover { box-shadow:0 4px 16px rgba(0,0,0,.1); transform:translateY(-2px); }
+.img-card img { width:100%; height:120px; object-fit:cover; display:block; }
+.img-card-placeholder { width:100%; height:120px; background:linear-gradient(135deg,#F3F4F6,#E5E7EB); display:flex; align-items:center; justify-content:center; color:#9CA3AF; font-size:1.6rem; }
+.img-card-body { padding:8px 10px; }
+.img-card-label { font-size:.7rem; font-weight:500; color:#374151; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.img-card-sub { font-size:.65rem; color:#9CA3AF; margin-top:1px; }
+.img-card-actions { display:flex; gap:5px; padding:6px 10px; border-top:1px solid #F3F4F6; }
+.img-badge { position:absolute; top:6px; left:6px; background:rgba(0,0,0,.65); color:#C9A96E; font-size:.55rem; padding:2px 6px; border-radius:6px; font-weight:700; letter-spacing:.05em; }
+.img-badge.blue { color:#60A5FA; }
+.add-img-card { border:2px dashed #E5E7EB; border-radius:10px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; height:160px; cursor:pointer; transition:all .2s; color:#9CA3AF; font-size:.78rem; text-align:center; padding:10px; }
+.add-img-card:hover { border-color:#C9A96E; color:#C9A96E; background:rgba(201,169,110,.04); }
+.tab-btn { padding:8px 18px; border-radius:20px; border:1px solid #E5E7EB; background:#fff; font-size:.78rem; font-weight:500; color:#374151; cursor:pointer; transition:all .2s; }
+.tab-btn.active, .tab-btn:hover { background:linear-gradient(135deg,#C9A96E,#A8854A); color:#fff; border-color:transparent; }
+</style>
+
+<!-- Tabs -->
+<div style="display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap">
+  <button class="tab-btn active" onclick="showTab('all',this)">Tout</button>
+  <button class="tab-btn" onclick="showTab('hero',this)">Hero & Hôtel</button>
+  <button class="tab-btn" onclick="showTab('rooms',this)">Chambres</button>
+  <button class="tab-btn" onclick="showTab('services',this)">Services</button>
+</div>
+
+<div class="data-card" style="padding:24px">
+
+  <!-- ─── HERO & HOTEL INFO ─── -->
+  <div class="img-section" id="tab-hero">
+    <div class="img-section-title"><i class="fas fa-image"></i> Image Hero (bannière d'accueil)</div>
+    <div class="img-grid">
+      <!-- Current hero image -->
+      <div class="img-card">
+        {% if hero and hero.get_bg_image %}
+        <img src="{{ hero.get_bg_image }}" alt="Hero">
+        {% else %}
+        <div class="img-card-placeholder"><i class="fas fa-image"></i></div>
+        {% endif %}
+        <span class="img-badge">HERO</span>
+        <div class="img-card-body">
+          <div class="img-card-label">Image principale</div>
+          <div class="img-card-sub">Section bannière accueil</div>
+        </div>
+        <div class="img-card-actions">
+          <a href="{% url 'dashboard_hero' %}" class="btn-gold" style="flex:1;justify-content:center;padding:5px;font-size:.72rem">
+            <i class="fas fa-edit me-1"></i>Modifier
+          </a>
+        </div>
+      </div>
+
+      <!-- Add new hero image -->
+      <a href="{% url 'dashboard_hero' %}" style="text-decoration:none">
+        <div class="add-img-card">
+          <i class="fas fa-cloud-upload-alt" style="font-size:1.5rem"></i>
+          <span>Changer l'image hero</span>
+        </div>
+      </a>
+    </div>
+
+    <!-- Hotel about image -->
+    <div class="img-section-title" style="margin-top:20px"><i class="fas fa-hotel"></i> Image "À Propos" de l'hôtel</div>
+    <div class="img-grid">
+      <div class="img-card">
+        {% if hotel_info and hotel_info.get_about_image %}
+        <img src="{{ hotel_info.get_about_image }}" alt="About">
+        {% else %}
+        <div class="img-card-placeholder"><i class="fas fa-hotel"></i></div>
+        {% endif %}
+        <span class="img-badge">À PROPOS</span>
+        <div class="img-card-body">
+          <div class="img-card-label">Image section histoire</div>
+          <div class="img-card-sub">Page d'accueil</div>
+        </div>
+        <div class="img-card-actions">
+          <a href="{% url 'dashboard_hotel_info' %}" class="btn-gold" style="flex:1;justify-content:center;padding:5px;font-size:.72rem">
+            <i class="fas fa-edit me-1"></i>Modifier
+          </a>
+        </div>
+      </div>
+      <a href="{% url 'dashboard_hotel_info' %}" style="text-decoration:none">
+        <div class="add-img-card">
+          <i class="fas fa-cloud-upload-alt" style="font-size:1.5rem"></i>
+          <span>Changer l'image à propos</span>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <!-- ─── ROOMS ─── -->
+  <div class="img-section" id="tab-rooms">
+    <div class="img-section-title"><i class="fas fa-bed"></i> Photos des Chambres</div>
+
+    {% for room in rooms %}
+    <div style="margin-bottom:20px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:.82rem;font-weight:600;color:#111">{{ room.name }}</span>
+          <span class="section-tag-pill" style="font-size:.62rem">{{ room.get_category_display }}</span>
+          <span style="font-size:.72rem;color:#9CA3AF">{{ room.images.count }} photo{{ room.images.count|pluralize }}</span>
+        </div>
+        <a href="{% url 'dashboard_room_edit' room.id %}" class="topbar-btn" style="font-size:.72rem;padding:5px 12px">
+          <i class="fas fa-images me-1"></i>Gérer les photos
+        </a>
+      </div>
+      <div class="img-grid">
+        {% for img in room.images.all %}
+        <div class="img-card">
+          <img src="{{ img.get_image_src }}" alt="{{ img.caption|default:room.name }}">
+          {% if img.is_primary %}<span class="img-badge">★ PRINCIPALE</span>{% endif %}
+          {% if img.is_360 %}<span class="img-badge blue" style="top:{% if img.is_primary %}26px{% else %}6px{% endif %}">360°</span>{% endif %}
+          <div class="img-card-body">
+            <div class="img-card-label">{{ img.caption|default:"Sans légende" }}</div>
+            <div class="img-card-sub">{{ room.name|truncatechars:20 }}</div>
+          </div>
+          <div class="img-card-actions">
+            <form method="post" action="{% url 'dashboard_room_image_delete' img.id %}" style="flex:1" onsubmit="return confirm('Supprimer cette photo ?')">
+              {% csrf_token %}
+              <button type="submit" class="topbar-btn w-100 justify-content-center" style="font-size:.72rem;color:#EF4444;padding:5px">
+                <i class="fas fa-trash me-1"></i>Supprimer
+              </button>
+            </form>
+          </div>
+        </div>
+        {% endfor %}
+
+        <!-- Add photo for this room -->
+        <div class="add-img-card" onclick="openAddModal({{ room.id }},'{{ room.name|escapejs }}')">
+          <i class="fas fa-plus-circle" style="font-size:1.5rem"></i>
+          <span>Ajouter une photo</span>
+          <span style="font-size:.65rem;color:#C0C0C0">{{ room.name|truncatechars:20 }}</span>
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <div style="text-align:center;padding:30px;color:#9CA3AF">
+      <i class="fas fa-bed" style="font-size:2rem;margin-bottom:8px;display:block"></i>
+      <p>Aucune chambre. <a href="{% url 'dashboard_room_add' %}" style="color:#C9A96E">Ajouter une chambre</a></p>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- ─── SERVICES ─── -->
+  <div class="img-section" id="tab-services">
+    <div class="img-section-title"><i class="fas fa-concierge-bell"></i> Images des Services</div>
+    <div class="img-grid">
+      {% for svc in services %}
+      <div class="img-card">
+        {% if svc.get_image %}
+        <img src="{{ svc.get_image }}" alt="{{ svc.name }}">
+        {% else %}
+        <div class="img-card-placeholder">
+          <i class="{{ svc.icon_class }}" style="color:#C9A96E"></i>
+        </div>
+        {% endif %}
+        <div class="img-card-body">
+          <div class="img-card-label">{{ svc.name }}</div>
+          <div class="img-card-sub">{{ svc.icon_class }}</div>
+        </div>
+        <div class="img-card-actions">
+          <button onclick="openServiceImgModal({{ svc.id }},'{{ svc.name|escapejs }}','{{ svc.image_url|escapejs }}')"
+            class="btn-gold" style="flex:1;justify-content:center;padding:5px;font-size:.72rem">
+            <i class="fas fa-edit me-1"></i>Modifier
+          </button>
+        </div>
+      </div>
+      {% empty %}
+      <div style="color:#9CA3AF;font-size:.83rem;padding:20px">
+        Aucun service. <a href="{% url 'dashboard_services' %}" style="color:#C9A96E">Ajouter des services</a>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+
+<!-- Modal: Add room photo -->
+<div class="modal-overlay" id="addPhotoModal" onclick="if(event.target===this)this.classList.remove('show-modal')">
+  <div class="modal-box" style="max-width:460px">
+    <div class="modal-head">
+      <h6 style="margin:0;font-weight:600"><i class="fas fa-plus-circle me-2" style="color:#C9A96E"></i>Ajouter une photo</h6>
+      <button class="close-modal" onclick="document.getElementById('addPhotoModal').classList.remove('show-modal')">×</button>
+    </div>
+    <form method="post" id="addPhotoForm" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="modal-body">
+        <p id="addPhotoRoomName" style="font-size:.82rem;color:#6B7280;margin-bottom:14px"></p>
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label">URL de l'image</label>
+            <input type="url" name="image_url" class="form-control" placeholder="https://images.unsplash.com/..." id="addPhotoUrl" oninput="previewAddUrl(this.value)">
+          </div>
+          <div class="col-12">
+            <div style="text-align:center;color:#9CA3AF;font-size:.72rem">— ou —</div>
+            <label class="form-label mt-1">Upload depuis votre PC</label>
+            <input type="file" name="image_file" class="form-control" accept="image/*" onchange="previewAddFile(this)">
+          </div>
+          <div id="addPhotoPreviewWrap" style="display:none" class="col-12">
+            <img id="addPhotoPreview" style="width:100%;height:140px;object-fit:cover;border-radius:8px;border:2px solid #C9A96E">
+          </div>
+          <div class="col-12">
+            <input type="text" name="caption" class="form-control" placeholder="Légende (optionnel)">
+          </div>
+          <div class="col-6">
+            <label style="display:flex;align-items:center;gap:7px;font-size:.82rem;cursor:pointer;padding:8px;background:#F9FAFB;border-radius:8px;border:1px solid #E5E7EB">
+              <input type="checkbox" name="is_primary" style="width:16px;height:16px;accent-color:#C9A96E"> Principale
+            </label>
+          </div>
+          <div class="col-6">
+            <label style="display:flex;align-items:center;gap:7px;font-size:.82rem;cursor:pointer;padding:8px;background:#F9FAFB;border-radius:8px;border:1px solid #E5E7EB">
+              <input type="checkbox" name="is_360" style="width:16px;height:16px;accent-color:#3B82F6"> 360°
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="topbar-btn" onclick="document.getElementById('addPhotoModal').classList.remove('show-modal')">Annuler</button>
+        <button type="submit" class="btn-gold"><i class="fas fa-cloud-upload-alt me-2"></i>Ajouter</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Service image -->
+<div class="modal-overlay" id="serviceImgModal" onclick="if(event.target===this)this.classList.remove('show-modal')">
+  <div class="modal-box" style="max-width:420px">
+    <div class="modal-head">
+      <h6 style="margin:0;font-weight:600"><i class="fas fa-image me-2" style="color:#C9A96E"></i>Image du service</h6>
+      <button class="close-modal" onclick="document.getElementById('serviceImgModal').classList.remove('show-modal')">×</button>
+    </div>
+    <form method="post" id="serviceImgForm" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="modal-body">
+        <p id="serviceImgName" style="font-size:.82rem;font-weight:600;color:#111;margin-bottom:12px"></p>
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label">URL de l'image</label>
+            <input type="url" name="image_url" id="svc_img_url" class="form-control" placeholder="https://images.unsplash.com/..." oninput="previewSvcUrl(this.value)">
+          </div>
+          <div class="col-12">
+            <label class="form-label">Upload</label>
+            <input type="file" name="image_file" class="form-control" accept="image/*" onchange="previewSvcFile(this)">
+          </div>
+          <div id="svcImgPreviewWrap" style="display:none" class="col-12">
+            <img id="svcImgPreview" style="width:100%;height:140px;object-fit:cover;border-radius:8px;border:2px solid #C9A96E">
+          </div>
+          <!-- Hidden fields to preserve other data -->
+          <input type="hidden" name="name" id="svc_hidden_name">
+          <input type="hidden" name="description" id="svc_hidden_desc">
+          <input type="hidden" name="icon_class" id="svc_hidden_icon">
+          <input type="hidden" name="order" value="0">
+          <input type="hidden" name="is_featured" value="on">
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="topbar-btn" onclick="document.getElementById('serviceImgModal').classList.remove('show-modal')">Annuler</button>
+        <button type="submit" class="btn-gold"><i class="fas fa-save me-2"></i>Enregistrer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Tabs
+function showTab(tab, btn) {
+  document.querySelectorAll('.img-section').forEach(s => {
+    s.style.display = (tab === 'all' || s.id === 'tab-' + tab) ? 'block' : 'none';
+  });
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// Room photo modal
+function openAddModal(roomId, roomName) {
+  document.getElementById('addPhotoForm').action = '/dashboard/chambres/' + roomId + '/image/';
+  document.getElementById('addPhotoRoomName').textContent = 'Chambre : ' + roomName;
+  document.getElementById('addPhotoPreviewWrap').style.display = 'none';
+  document.getElementById('addPhotoModal').classList.add('show-modal');
+}
+function previewAddUrl(url) {
+  const wrap = document.getElementById('addPhotoPreviewWrap');
+  if (url) { document.getElementById('addPhotoPreview').src = url; wrap.style.display = 'block'; }
+  else wrap.style.display = 'none';
+}
+function previewAddFile(input) {
+  if (input.files[0]) {
+    const r = new FileReader();
+    r.onload = e => { document.getElementById('addPhotoPreview').src = e.target.result; document.getElementById('addPhotoPreviewWrap').style.display = 'block'; };
+    r.readAsDataURL(input.files[0]);
+  }
+}
+
+// Service image modal — loads existing service data to avoid overwriting
+function openServiceImgModal(id, name, imgUrl) {
+  document.getElementById('serviceImgForm').action = '/dashboard/contenu/services/' + id + '/modifier/';
+  document.getElementById('serviceImgName').textContent = name;
+  document.getElementById('svc_img_url').value = imgUrl || '';
+  document.getElementById('svc_hidden_name').value = name;
+  document.getElementById('svcImgPreviewWrap').style.display = imgUrl ? 'block' : 'none';
+  if (imgUrl) document.getElementById('svcImgPreview').src = imgUrl;
+  document.getElementById('serviceImgModal').classList.add('show-modal');
+}
+function previewSvcUrl(url) {
+  const wrap = document.getElementById('svcImgPreviewWrap');
+  if (url) { document.getElementById('svcImgPreview').src = url; wrap.style.display = 'block'; }
+  else wrap.style.display = 'none';
+}
+function previewSvcFile(input) {
+  if (input.files[0]) {
+    const r = new FileReader();
+    r.onload = e => { document.getElementById('svcImgPreview').src = e.target.result; document.getElementById('svcImgPreviewWrap').style.display = 'block'; };
+    r.readAsDataURL(input.files[0]);
+  }
+}
+
+// Style
+const style = document.createElement('style');
+style.textContent = `.show-modal{display:flex!important}.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center}.modal-box{background:#fff;border-radius:14px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)}.modal-head{padding:18px 22px;border-bottom:1px solid #F3F4F6;display:flex;align-items:center;justify-content:space-between}.modal-body{padding:20px 22px}.modal-foot{padding:14px 22px;border-top:1px solid #F3F4F6;display:flex;gap:10px;justify-content:flex-end}.close-modal{background:none;border:none;font-size:1.2rem;cursor:pointer;color:#9CA3AF}`;
+document.head.appendChild(style);
+</script>
+{% endblock %}

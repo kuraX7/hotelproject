@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="UTF-8"><title>Annulation — Hôtel Al Andalus</title></head>
+<body style="margin:0;padding:0;background:#F0F2F8;font-family:'Helvetica Neue',Arial,sans-serif">
+<div style="max-width:600px;margin:40px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.1)">
+  <div style="background:linear-gradient(135deg,#1A1D27,#2C2C2C);padding:36px;text-align:center">
+    <div style="color:#C9A96E;font-size:1.8rem;margin-bottom:6px">✦</div>
+    <h1 style="color:#fff;font-size:1.4rem;font-weight:300;margin:0">Al Andalus</h1>
+    <p style="color:#C9A96E;font-size:.6rem;letter-spacing:.3em;text-transform:uppercase;margin:4px 0 0">HOTEL & SPA</p>
+  </div>
+  <div style="background:#FEE2E2;border-bottom:3px solid #EF4444;padding:18px 36px;text-align:center">
+    <div style="font-size:1.5rem;margin-bottom:4px">❌</div>
+    <h2 style="color:#991B1B;font-size:1.1rem;margin:0">Réservation Annulée</h2>
+    <p style="color:#B91C1C;font-size:.82rem;margin:4px 0 0">Réf. #AL{{ booking.id|stringformat:"05d" }}</p>
+  </div>
+  <div style="padding:32px 36px">
+    <p style="color:#374151;font-size:.92rem;line-height:1.7;margin:0 0 20px">
+      Bonjour <strong>{{ booking.name }}</strong>,
+    </p>
+    <p style="color:#374151;font-size:.88rem;line-height:1.7;margin:0 0 24px">
+      Votre réservation du <strong>{{ booking.check_in|date:"d F Y" }}</strong> au <strong>{{ booking.check_out|date:"d F Y" }}</strong> 
+      pour la chambre <strong>{{ booking.room.name }}</strong> a bien été annulée.
+    </p>
+    <div style="background:#F9FAFB;border-radius:10px;padding:16px 20px;margin-bottom:24px;text-align:center">
+      <p style="color:#6B7280;font-size:.82rem;margin:0 0 4px">Montant remboursé / non débité</p>
+      <div style="color:#10B981;font-size:1.3rem;font-weight:700">{{ booking.total_price|floatformat:0 }} MAD</div>
+    </div>
+    <p style="color:#374151;font-size:.88rem;line-height:1.7;margin:0 0 8px">
+      Nous espérons vous accueillir prochainement. Pour réserver à nouveau :
+    </p>
+    <div style="text-align:center;margin-top:20px">
+      <a href="{{ site_url }}/chambres/" style="display:inline-block;background:linear-gradient(135deg,#C9A96E,#A8854A);color:#fff;text-decoration:none;padding:12px 28px;border-radius:8px;font-size:.85rem;font-weight:600">
+        Voir nos chambres →
+      </a>
+    </div>
+  </div>
+  <div style="background:#1A1D27;padding:20px 36px;text-align:center">
+    <p style="color:rgba(255,255,255,.4);font-size:.72rem;margin:0">
+      ✦ Al Andalus Hotel · {{ info.phone|default:"+212 5 22 XX XX XX" }} · {{ info.email|default:"contact@hotel-alandalus.ma" }}
+    </p>
+  </div>
+</div>
+</body>
+</html>

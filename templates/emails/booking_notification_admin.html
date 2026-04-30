@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Nouvelle réservation — Al Andalus Admin</title>
+</head>
+<body style="margin:0;padding:0;background:#F0F2F8;font-family:'Helvetica Neue',Arial,sans-serif">
+
+<div style="max-width:600px;margin:40px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.1)">
+
+  <!-- Header admin -->
+  <div style="background:linear-gradient(135deg,#1A1D27,#2C2C2C);padding:28px 36px;display:flex;align-items:center;justify-content:space-between">
+    <div>
+      <div style="color:#C9A96E;font-size:1rem;margin-bottom:4px">✦ Al Andalus</div>
+      <h2 style="color:#fff;font-size:1rem;margin:0;font-weight:500">Notification Admin</h2>
+    </div>
+    <div style="background:#C9A96E;color:#fff;border-radius:8px;padding:8px 16px;font-size:.75rem;font-weight:700;letter-spacing:.1em">
+      NOUVELLE RÉSA
+    </div>
+  </div>
+
+  <!-- Alert -->
+  <div style="background:#D1FAE5;border-bottom:3px solid #10B981;padding:14px 36px;display:flex;align-items:center;gap:10px">
+    <span style="font-size:1.3rem">🔔</span>
+    <div>
+      <div style="color:#065F46;font-weight:700;font-size:.9rem">Nouvelle réservation reçue</div>
+      <div style="color:#047857;font-size:.78rem">Réf. #AL{{ booking.id|stringformat:"05d" }} · {{ booking.created_at|date:"d/m/Y à H:i" }}</div>
+    </div>
+  </div>
+
+  <div style="padding:28px 36px">
+
+    <!-- Client info -->
+    <div style="margin-bottom:20px">
+      <h3 style="font-size:.75rem;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:.12em;margin:0 0 12px">👤 Informations client</h3>
+      <div style="background:#F9FAFB;border-radius:10px;padding:16px">
+        <table style="width:100%;border-collapse:collapse">
+          <tr>
+            <td style="padding:5px 0;color:#6B7280;font-size:.82rem;width:35%">Nom</td>
+            <td style="padding:5px 0;color:#111;font-size:.82rem;font-weight:600">{{ booking.name }}</td>
+          </tr>
+          <tr>
+            <td style="padding:5px 0;color:#6B7280;font-size:.82rem">Email</td>
+            <td style="padding:5px 0"><a href="mailto:{{ booking.email }}" style="color:#C9A96E;font-size:.82rem;font-weight:600;text-decoration:none">{{ booking.email }}</a></td>
+          </tr>
+          {% if booking.phone %}
+          <tr>
+            <td style="padding:5px 0;color:#6B7280;font-size:.82rem">Téléphone</td>
+            <td style="padding:5px 0"><a href="tel:{{ booking.phone }}" style="color:#C9A96E;font-size:.82rem;font-weight:600;text-decoration:none">{{ booking.phone }}</a></td>
+          </tr>
+          {% endif %}
+        </table>
+      </div>
+    </div>
+
+    <!-- Booking details -->
+    <div style="margin-bottom:20px">
+      <h3 style="font-size:.75rem;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:.12em;margin:0 0 12px">🏨 Détails du séjour</h3>
+      <div style="background:#F9FAFB;border-radius:10px;padding:16px">
+        <table style="width:100%;border-collapse:collapse">
+          <tr>
+            <td style="padding:6px 0;border-bottom:1px solid #F3F4F6;color:#6B7280;font-size:.82rem;width:35%">Chambre</td>
+            <td style="padding:6px 0;border-bottom:1px solid #F3F4F6;color:#111;font-size:.82rem;font-weight:600">{{ booking.room.name }}</td>
+          </tr>
+          <tr>
+            <td style="padding:6px 0;border-bottom:1px solid #F3F4F6;color:#6B7280;font-size:.82rem">Catégorie</td>
+            <td style="padding:6px 0;border-bottom:1px solid #F3F4F6;color:#111;font-size:.82rem">{{ booking.room.get_category_display }}</td>
+          </tr>
+          <tr>
+            <td style="padding:6px 0;border-bottom:1px solid #F3F4F6;color:#6B7280;font-size:.82rem">Arrivée</td>
+            <td style="padding:6px 0;border-bottom:1px solid #F3F4F6;color:#111;font-size:.82rem;font-weight:600">{{ booking.check_in|date:"d/m/Y" }} ({{ booking.check_in|date:"l" }})</td>
+          </tr>
+          <tr>
+            <td style="padding:6px 0;border-bottom:1px solid #F3F4F6;color:#6B7280;font-size:.82rem">Départ</td>
+            <td style="padding:6px 0;border-bottom:1px solid #F3F4F6;color:#111;font-size:.82rem;font-weight:600">{{ booking.check_out|date:"d/m/Y" }} ({{ booking.check_out|date:"l" }})</td>
+          </tr>
+          <tr>
+            <td style="padding:6px 0;border-bottom:1px solid #F3F4F6;color:#6B7280;font-size:.82rem">Durée / Pers.</td>
+            <td style="padding:6px 0;border-bottom:1px solid #F3F4F6;color:#111;font-size:.82rem">{{ booking.nights }} nuit{{ booking.nights|pluralize }} · {{ booking.guests }} pers.</td>
+          </tr>
+          <tr>
+            <td style="padding:8px 0 0;color:#6B7280;font-size:.82rem">Montant</td>
+            <td style="padding:8px 0 0;color:#C9A96E;font-size:1rem;font-weight:700">{{ booking.total_price|floatformat:0 }} MAD</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    {% if booking.special_requests %}
+    <div style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:10px;padding:14px 18px;margin-bottom:20px">
+      <p style="color:#92400E;font-size:.82rem;margin:0"><strong>📝 Demandes spéciales :</strong><br>{{ booking.special_requests }}</p>
+    </div>
+    {% endif %}
+
+    <!-- CTA -->
+    <div style="text-align:center;margin-top:24px">
+      <a href="{{ dashboard_url }}/dashboard/reservations/" 
+        style="display:inline-block;background:linear-gradient(135deg,#C9A96E,#A8854A);color:#fff;text-decoration:none;padding:12px 32px;border-radius:8px;font-size:.85rem;font-weight:600;letter-spacing:.05em">
+        Gérer la réservation →
+      </a>
+    </div>
+  </div>
+
+  <div style="background:#F9FAFB;border-top:1px solid #E5E7EB;padding:16px 36px;text-align:center">
+    <p style="color:#9CA3AF;font-size:.72rem;margin:0">
+      Email automatique — Dashboard Al Andalus Admin
+    </p>
+  </div>
+
+</div>
+</body>
+</html>

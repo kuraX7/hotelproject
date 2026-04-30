@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Notre Carte — Restaurant Al Andalus{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── LIGHTBOX ── */
+.lightbox-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,.92);
+  z-index: 9999; align-items: center; justify-content: center;
+  padding: 20px; cursor: zoom-out;
+}
+.lightbox-overlay.open { display: flex; animation: lbFade .25s ease; }
+@keyframes lbFade { from{opacity:0} to{opacity:1} }
+.lightbox-img {
+  max-width: 90vw; max-height: 90vh; object-fit: contain;
+  border-radius: 8px; box-shadow: 0 24px 64px rgba(0,0,0,.6);
+  cursor: default; animation: lbZoom .25s ease;
+}
+@keyframes lbZoom { from{transform:scale(.92);opacity:0} to{transform:scale(1);opacity:1} }
+.lightbox-close {
+  position: fixed; top: 20px; right: 24px; background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.2); color: #fff; width: 42px; height: 42px;
+  border-radius: 50%; font-size: 1.3rem; cursor: pointer; display: flex;
+  align-items: center; justify-content: center; transition: all .2s; z-index: 10000;
+}
+.lightbox-close:hover { background: rgba(255,255,255,.25); }
+.lightbox-nav {
+  position: fixed; top: 50%; transform: translateY(-50%);
+  background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2);
+  color: #fff; width: 46px; height: 46px; border-radius: 50%;
+  font-size: 1.1rem; cursor: pointer; display: flex; align-items: center;
+  justify-content: center; transition: all .2s; z-index: 10000;
+}
+.lightbox-nav:hover { background: rgba(201,169,110,.5); border-color: #C9A96E; }
+.lightbox-prev { left: 20px; }
+.lightbox-next { right: 20px; }
+.lightbox-caption {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  background: rgba(0,0,0,.7); backdrop-filter: blur(8px);
+  color: #fff; padding: 10px 24px; border-radius: 30px; text-align: center;
+  font-size: .85rem; letter-spacing: .03em; z-index: 10000;
+  border: 1px solid rgba(255,255,255,.1);
+}
+.lightbox-counter {
+  position: fixed; top: 24px; left: 50%; transform: translateX(-50%);
+  background: rgba(0,0,0,.6); color: rgba(255,255,255,.7);
+  padding: 5px 16px; border-radius: 20px; font-size: .75rem; z-index: 10000;
+}
+
+/* ── MENU CARDS ── */
+.menu-card {
+  background: #fff; border-radius: 14px; overflow: hidden;
+  border: 1px solid #E5E7EB; box-shadow: 0 2px 16px rgba(0,0,0,.06);
+  transition: all .3s; cursor: zoom-in;
+}
+.menu-card:hover {
+  transform: translateY(-6px); box-shadow: 0 16px 40px rgba(0,0,0,.14);
+  border-color: #C9A96E;
+}
+.menu-card-img {
+  width: 100%; aspect-ratio: 3/4; object-fit: cover; display: block;
+  transition: transform .5s;
+}
+.menu-card:hover .menu-card-img { transform: scale(1.04); }
+.menu-card-img-wrap { overflow: hidden; position: relative; }
+.menu-card-zoom-hint {
+  position: absolute; inset: 0; display: flex; align-items: center;
+  justify-content: center; background: rgba(0,0,0,.0);
+  transition: background .3s; pointer-events: none;
+}
+.menu-card:hover .menu-card-zoom-hint {
+  background: rgba(0,0,0,.25);
+}
+.menu-card-zoom-hint i {
+  color: #fff; font-size: 2rem; opacity: 0; transform: scale(.7);
+  transition: all .3s;
+}
+.menu-card:hover .menu-card-zoom-hint i { opacity: 1; transform: scale(1); }
+.menu-card-body { padding: 18px 20px; }
+.menu-card-title { font-family: 'Cormorant Garamond', serif; font-size: 1.15rem; font-weight: 600; color: #111; margin-bottom: 4px; }
+.menu-card-desc  { font-size: .82rem; color: #6B7280; line-height: 1.5; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<section class="page-hero" style="height:260px">
+  <div class="page-hero-overlay"></div>
+  <div style="position:absolute;inset:0;background:linear-gradient(135deg,#1A1D27,#2C2C2C)"></div>
+  <div class="container page-hero-content text-center" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%">
+    <div class="section-tag light mb-2">Restaurant Al Andalus</div>
+    <h1 class="page-hero-title" style="margin:0">Notre Carte</h1>
+    <p style="color:rgba(255,255,255,.6);font-size:.88rem;margin-top:10px">
+      Cliquez sur une image pour l'agrandir
+    </p>
+  </div>
+</section>
+
+<section class="py-5" style="background:#FAF8F4;min-height:50vh">
+<div class="container">
+
+  {% if cards %}
+  <div class="row g-4 justify-content-center">
+    {% for card in cards %}
+    <div class="col-lg-4 col-md-6 col-10">
+      <div class="menu-card" onclick="openLightbox({{ forloop.counter0 }})">
+        <div class="menu-card-img-wrap">
+          <img src="{{ card.get_image }}" alt="{{ card.title }}" class="menu-card-img" loading="lazy">
+          <div class="menu-card-zoom-hint"><i class="fas fa-search-plus"></i></div>
+        </div>
+        <div class="menu-card-body">
+          <div class="menu-card-title">{{ card.title }}</div>
+          {% if card.description %}
+          <div class="menu-card-desc">{{ card.description }}</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- CTA -->
+  <div style="text-align:center;margin-top:40px">
+    <a href="{% url 'room_list' %}" class="btn btn-gold btn-lg px-5">
+      <i class="fas fa-bed me-2"></i>Réserver votre séjour
+    </a>
+    {% if info %}
+    <p style="font-size:.8rem;color:#9CA3AF;margin-top:12px">
+      Réservation restaurant : <a href="tel:{{ info.phone }}" style="color:var(--gold)">{{ info.phone }}</a>
+    </p>
+    {% endif %}
+  </div>
+
+  {% else %}
+  <div style="text-align:center;padding:60px;color:#9CA3AF">
+    <i class="fas fa-utensils" style="font-size:3rem;margin-bottom:16px;display:block;opacity:.3"></i>
+    <p>Notre carte sera disponible prochainement.</p>
+  </div>
+  {% endif %}
+
+</div>
+</section>
+
+<!-- ── LIGHTBOX ── -->
+<div class="lightbox-overlay" id="lightbox" onclick="if(event.target===this)closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()"><i class="fas fa-times"></i></button>
+  <button class="lightbox-nav lightbox-prev" onclick="event.stopPropagation();navigateLightbox(-1)"><i class="fas fa-chevron-left"></i></button>
+  <img src="" alt="" class="lightbox-img" id="lightbox-img" onclick="event.stopPropagation()">
+  <button class="lightbox-nav lightbox-next" onclick="event.stopPropagation();navigateLightbox(1)"><i class="fas fa-chevron-right"></i></button>
+  <div class="lightbox-caption" id="lightbox-caption"></div>
+  <div class="lightbox-counter" id="lightbox-counter"></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const cards = [
+  {% for card in cards %}
+  { img: "{{ card.get_image|escapejs }}", title: "{{ card.title|escapejs }}", desc: "{{ card.description|escapejs }}" },
+  {% endfor %}
+];
+let current = 0;
+
+function openLightbox(idx) {
+  current = idx;
+  showCard();
+  document.getElementById('lightbox').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function showCard() {
+  const c = cards[current];
+  document.getElementById('lightbox-img').src       = c.img;
+  document.getElementById('lightbox-img').alt       = c.title;
+  document.getElementById('lightbox-caption').innerHTML = `<strong>${c.title}</strong>${c.desc ? ' — ' + c.desc : ''}`;
+  document.getElementById('lightbox-counter').textContent = `${current + 1} / ${cards.length}`;
+  // Hide nav if only 1 card
+  document.querySelectorAll('.lightbox-nav').forEach(b => b.style.display = cards.length > 1 ? 'flex' : 'none');
+}
+function navigateLightbox(dir) {
+  current = (current + dir + cards.length) % cards.length;
+  const img = document.getElementById('lightbox-img');
+  img.style.opacity = '0';
+  img.style.transform = `scale(.95) translateX(${dir > 0 ? 30 : -30}px)`;
+  setTimeout(() => {
+    showCard();
+    img.style.transition = 'all .25s ease';
+    img.style.opacity = '1';
+    img.style.transform = 'scale(1) translateX(0)';
+    setTimeout(() => { img.style.transition = ''; }, 260);
+  }, 150);
+}
+// Keyboard navigation
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('lightbox').classList.contains('open')) return;
+  if (e.key === 'ArrowRight') navigateLightbox(1);
+  if (e.key === 'ArrowLeft')  navigateLightbox(-1);
+  if (e.key === 'Escape')     closeLightbox();
+});
+</script>
+{% endblock %}

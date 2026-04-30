@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Dashboard{% endblock %} — Al Andalus Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --sidebar-w:260px; --gold:#C9A96E; --gold-dark:#A8854A; --dark:#0F1117; --dark2:#1A1D27; --dark3:#242736; --border:rgba(255,255,255,0.07); --text-muted:rgba(255,255,255,0.45); --radius:12px; }
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:'Inter',sans-serif;background:#F0F2F8;min-height:100vh;display:flex}
+
+        .sidebar{width:var(--sidebar-w);height:100vh;background:var(--dark2);display:flex;flex-direction:column;position:fixed;left:0;top:0;z-index:200;border-right:1px solid var(--border);overflow-y:auto;overflow-x:hidden}.sidebar::-webkit-scrollbar{width:4px}.sidebar::-webkit-scrollbar-track{background:transparent}.sidebar::-webkit-scrollbar-thumb{background:rgba(201,169,110,.3);border-radius:4px}.sidebar::-webkit-scrollbar-thumb:hover{background:rgba(201,169,110,.6)}
+        .sidebar-brand{padding:20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-shrink:0}
+        .sidebar-brand-icon{width:38px;height:38px;background:linear-gradient(135deg,var(--gold),var(--gold-dark));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1rem;color:#fff;flex-shrink:0}
+        .sidebar-brand-text strong{color:#fff;font-size:0.9rem;display:block}
+        .sidebar-brand-text span{color:var(--gold);font-size:0.58rem;letter-spacing:0.2em;text-transform:uppercase}
+        .sidebar-nav{flex:1;padding:12px;overflow-y:visible}
+        .nav-section-label{color:var(--text-muted);font-size:0.58rem;letter-spacing:0.25em;text-transform:uppercase;padding:0 10px;margin:14px 0 6px;font-weight:600}
+        .sidebar-link{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:8px;color:rgba(255,255,255,0.55);text-decoration:none;font-size:0.82rem;font-weight:400;transition:all .2s;margin-bottom:1px}
+        .sidebar-link i{width:16px;text-align:center;font-size:0.8rem;flex-shrink:0}
+        .sidebar-link:hover{background:rgba(255,255,255,0.06);color:#fff}
+        .sidebar-link.active{background:linear-gradient(135deg,rgba(201,169,110,.2),rgba(168,133,74,.15));color:var(--gold);font-weight:500}
+        .sidebar-link .badge-count{margin-left:auto;background:var(--gold);color:#fff;font-size:0.58rem;padding:1px 6px;border-radius:10px;font-weight:600}
+        .sidebar-footer{padding:12px;border-top:1px solid var(--border);flex-shrink:0}
+        .sidebar-user{display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:8px;background:rgba(255,255,255,0.04)}
+        .sidebar-user-avatar{width:30px;height:30px;background:linear-gradient(135deg,var(--gold),var(--gold-dark));border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:0.7rem;font-weight:600;flex-shrink:0}
+        .sidebar-user-info strong{color:#fff;font-size:0.78rem;display:block;line-height:1.2}
+        .sidebar-user-info span{color:var(--text-muted);font-size:0.68rem}
+        .sidebar-user a{margin-left:auto;color:var(--text-muted);font-size:0.8rem;text-decoration:none}
+        .sidebar-user a:hover{color:#ff6b6b}
+
+        .main-content{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh}
+        .topbar{background:#fff;border-bottom:1px solid #E5E7EB;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+        .topbar-title{font-size:1.05rem;font-weight:600;color:#111}
+        .topbar-title span{color:#9CA3AF;font-weight:400;font-size:0.82rem;margin-left:8px}
+        .topbar-actions{display:flex;align-items:center;gap:10px}
+        .topbar-btn{background:#F3F4F6;border:none;padding:7px 14px;border-radius:8px;font-size:0.78rem;color:#374151;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px;font-weight:500;transition:all .2s}
+        .topbar-btn:hover{background:#E5E7EB;color:#111}
+        .topbar-btn.primary{background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:#fff}
+        .topbar-btn.primary:hover{opacity:.9;color:#fff}
+        .page-body{padding:24px;flex:1}
+
+        .stat-card{background:#fff;border-radius:var(--radius);padding:20px;border:1px solid #E5E7EB;display:flex;align-items:center;gap:14px;transition:box-shadow .2s}
+        .stat-card:hover{box-shadow:0 4px 20px rgba(0,0,0,.08)}
+        .stat-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+        .stat-icon.gold{background:rgba(201,169,110,.12);color:var(--gold)}
+        .stat-icon.blue{background:rgba(59,130,246,.1);color:#3B82F6}
+        .stat-icon.green{background:rgba(16,185,129,.1);color:#10B981}
+        .stat-icon.purple{background:rgba(139,92,246,.1);color:#8B5CF6}
+        .stat-icon.red{background:rgba(239,68,68,.1);color:#EF4444}
+        .stat-icon.orange{background:rgba(249,115,22,.1);color:#F97316}
+        .stat-value{font-size:1.7rem;font-weight:700;color:#111;line-height:1}
+        .stat-label{font-size:0.75rem;color:#6B7280;margin-top:3px}
+        .stat-badge{font-size:0.68rem;padding:2px 8px;border-radius:20px;font-weight:500;margin-top:5px;display:inline-block}
+        .stat-badge.up{background:#D1FAE5;color:#065F46}
+        .stat-badge.warn{background:#FEF3C7;color:#92400E}
+        .stat-badge.neutral{background:#F3F4F6;color:#6B7280}
+
+        .data-card{background:#fff;border-radius:var(--radius);border:1px solid #E5E7EB;overflow:hidden}
+        .data-card-header{padding:16px 20px;border-bottom:1px solid #F3F4F6;display:flex;align-items:center;justify-content:space-between}
+        .data-card-title{font-size:0.9rem;font-weight:600;color:#111;display:flex;align-items:center;gap:7px}
+        .data-card-title i{color:var(--gold)}
+        .table{margin:0;font-size:0.82rem}
+        .table thead th{background:#F9FAFB;border-top:none;border-bottom:1px solid #E5E7EB;font-size:0.68rem;text-transform:uppercase;letter-spacing:.06em;color:#6B7280;font-weight:600;padding:11px 14px;white-space:nowrap}
+        .table tbody td{padding:12px 14px;vertical-align:middle;border-color:#F3F4F6;color:#374151}
+        .table tbody tr:hover{background:#FAFAFA}
+        .table tbody tr:last-child td{border-bottom:none}
+
+        .status-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:0.7rem;font-weight:500;white-space:nowrap}
+        .status-badge::before{content:'';width:5px;height:5px;border-radius:50%}
+        .status-confirmed{background:#D1FAE5;color:#065F46}.status-confirmed::before{background:#10B981}
+        .status-pending{background:#FEF3C7;color:#92400E}.status-pending::before{background:#F59E0B}
+        .status-cancelled{background:#FEE2E2;color:#991B1B}.status-cancelled::before{background:#EF4444}
+        .status-completed{background:#EDE9FE;color:#5B21B6}.status-completed::before{background:#8B5CF6}
+        .avail-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:0.7rem;font-weight:500}
+        .avail-yes{background:#D1FAE5;color:#065F46}.avail-no{background:#FEE2E2;color:#991B1B}.avail-maint{background:#FEF3C7;color:#92400E}
+
+        .room-mgmt-card{background:#fff;border:1px solid #E5E7EB;border-radius:var(--radius);overflow:hidden;transition:all .2s}
+        .room-mgmt-card:hover{box-shadow:0 4px 20px rgba(0,0,0,.08);transform:translateY(-2px)}
+        .room-mgmt-img{height:150px;object-fit:cover;width:100%;display:block}
+        .room-mgmt-img-placeholder{height:150px;background:linear-gradient(135deg,#F3F4F6,#E5E7EB);display:flex;align-items:center;justify-content:center;color:#9CA3AF;font-size:1.8rem}
+        .room-mgmt-body{padding:14px}
+        .room-mgmt-footer{padding:10px 14px;border-top:1px solid #F3F4F6;display:flex;gap:7px}
+
+        .form-card{background:#fff;border-radius:var(--radius);border:1px solid #E5E7EB;padding:24px}
+        .form-section{margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid #F3F4F6}
+        .form-section:last-child{border-bottom:none;margin-bottom:0}
+        .form-section-title{font-size:0.75rem;font-weight:600;color:#6B7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+        .form-section-title::after{content:'';flex:1;height:1px;background:#F3F4F6}
+        .form-label{font-size:0.8rem;font-weight:500;color:#374151;margin-bottom:4px}
+        .form-control,.form-select{font-size:0.83rem;border-color:#E5E7EB;border-radius:8px}
+        .form-control:focus,.form-select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,169,110,.12)}
+        .form-text{font-size:0.72rem;color:#9CA3AF}
+
+        .alert{border:none;border-radius:10px;font-size:0.83rem;border-left:4px solid}
+        .alert-success{background:#F0FFF4;color:#276749;border-left-color:#10B981}
+        .alert-danger{background:#FFF5F5;color:#9B2C2C;border-left-color:#EF4444}
+        .alert-warning{background:#FFFBEA;color:#7B4F00;border-left-color:#F59E0B}
+
+        .btn-icon{width:30px;height:30px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;font-size:0.75rem;border:1px solid #E5E7EB;background:#fff;color:#374151;transition:all .2s;cursor:pointer;text-decoration:none}
+        .btn-icon:hover{background:#F3F4F6;color:#111}
+        .btn-icon.danger:hover{background:#FEE2E2;color:#EF4444;border-color:#FECACA}
+        .btn-icon.success:hover{background:#D1FAE5;color:#10B981;border-color:#A7F3D0}
+        .btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:#fff;border:none;padding:8px 18px;border-radius:8px;font-size:0.8rem;font-weight:500;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition:opacity .2s}
+        .btn-gold:hover{opacity:.9;color:#fff}
+        .section-tag-pill{display:inline-flex;align-items:center;gap:4px;background:rgba(201,169,110,.1);color:var(--gold);font-size:0.67rem;font-weight:600;padding:2px 9px;border-radius:20px}
+        .toggle-switch{position:relative;display:inline-block;width:40px;height:22px}
+        .toggle-switch input{opacity:0;width:0;height:0}
+        .toggle-slider{position:absolute;cursor:pointer;inset:0;background:#D1D5DB;border-radius:24px;transition:.3s}
+        .toggle-slider::before{content:'';position:absolute;height:16px;width:16px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s}
+        input:checked+.toggle-slider{background:#10B981}
+        input:checked+.toggle-slider::before{transform:translateX(18px)}
+        .search-bar{position:relative}
+        .search-bar i{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:#9CA3AF;font-size:0.78rem}
+        .search-bar input{padding-left:34px;background:#F9FAFB;border:1px solid #E5E7EB;border-radius:8px;font-size:0.83rem}
+        .empty-state{text-align:center;padding:50px 20px;color:#9CA3AF}
+        .empty-state i{font-size:2.2rem;margin-bottom:10px;display:block}
+        .img-preview{width:100%;height:140px;object-fit:cover;border-radius:8px;border:1px solid #E5E7EB}
+        .cms-section-card{background:#fff;border:1px solid #E5E7EB;border-radius:var(--radius);overflow:hidden;transition:all .2s;cursor:pointer}
+        .cms-section-card:hover{box-shadow:0 4px 20px rgba(0,0,0,.08);transform:translateY(-2px)}
+        .cms-section-card .card-icon{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;margin-bottom:12px}
+        @media(max-width:992px){.sidebar{transform:translateX(-100%)}.main-content{margin-left:0}}
+    </style>
+</head>
+<body>
+{% load content_tags %}
+
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">✦</div>
+        <div class="sidebar-brand-text">
+            {% get_hotel_info as dinfo %}
+            <strong>{% if dinfo %}{{ dinfo.hotel_name }}{% else %}Al Andalus{% endif %}</strong>
+            <span>Administration</span>
+        </div>
+    </div>
+    <nav class="sidebar-nav">
+        <div class="nav-section-label">Principal</div>
+        <a href="{% url 'dashboard_home' %}" class="sidebar-link {% if request.resolver_match.url_name == 'dashboard_home' %}active{% endif %}">
+            <i class="fas fa-chart-pie"></i> Tableau de bord
+        </a>
+
+        <div class="nav-section-label">Hébergement</div>
+        {% if not dashboard_is_director %}
+        <a href="{% url 'dashboard_reception' %}" class="sidebar-link {% if request.resolver_match.url_name == 'dashboard_reception' %}active{% endif %}">
+            <i class="fas fa-concierge-bell"></i> Tableau Réception
+        </a>
+        {% endif %}
+        {% if dashboard_is_admin %}
+        <a href="{% url 'dashboard_rooms' %}" class="sidebar-link {% if 'room' in request.resolver_match.url_name %}active{% endif %}">
+            <i class="fas fa-bed"></i> Chambres
+        </a>
+        {% endif %}
+        <a href="{% url 'dashboard_bookings' %}" class="sidebar-link {% if 'booking' in request.resolver_match.url_name %}active{% endif %}">
+            <i class="fas fa-calendar-check"></i> Réservations
+            {% get_pending_count as pending %}
+            {% if pending %}<span class="badge-count">{{ pending }}</span>{% endif %}
+        </a>
+        {% if dashboard_is_admin %}
+        <a href="{% url 'dashboard_payments' %}" class="sidebar-link {% if 'payment' in request.resolver_match.url_name %}active{% endif %}">
+            <i class="fas fa-credit-card"></i> Paiements CMI
+        </a>
+        <a href="{% url 'dashboard_promotions' %}" class="sidebar-link {% if 'promotion' in request.resolver_match.url_name %}active{% endif %}">
+            <i class="fas fa-tags"></i> Promotions
+        </a>
+
+        <div class="nav-section-label">Restaurant</div>
+        <a href="{% url 'dashboard_menu_card' %}" class="sidebar-link {% if 'menu_card' in request.resolver_match.url_name %}active{% endif %}">
+            <i class="fas fa-utensils"></i> Notre Carte
+        </a>
+
+        <div class="nav-section-label">Contenu du Site</div>
+        <a href="{% url 'dashboard_hero' %}" class="sidebar-link {% if request.resolver_match.url_name == 'dashboard_hero' %}active{% endif %}">
+            <i class="fas fa-image"></i> Section Hero
+        </a>
+        <a href="{% url 'dashboard_hotel_info' %}" class="sidebar-link {% if request.resolver_match.url_name == 'dashboard_hotel_info' %}active{% endif %}">
+            <i class="fas fa-hotel"></i> Infos Hôtel
+        </a>
+        <a href="{% url 'dashboard_services' %}" class="sidebar-link {% if 'service' in request.resolver_match.url_name %}active{% endif %}">
+            <i class="fas fa-concierge-bell"></i> Services
+        </a>
+        <a href="{% url 'dashboard_media' %}" class="sidebar-link {% if request.resolver_match.url_name == 'dashboard_media' %}active{% endif %}">
+            <i class="fas fa-photo-video"></i> Médiathèque
+        </a>
+        <a href="{% url 'dashboard_faq' %}" class="sidebar-link {% if 'faq' in request.resolver_match.url_name %}active{% endif %}">
+            <i class="fas fa-question-circle"></i> FAQ
+        </a>
+        <a href="{% url 'dashboard_rules' %}" class="sidebar-link {% if request.resolver_match.url_name == 'dashboard_rules' %}active{% endif %}">
+            <i class="fas fa-house-damage"></i> Règles de la maison
+        </a>
+        <a href="{% url 'dashboard_testimonials' %}" class="sidebar-link {% if 'testimonial' in request.resolver_match.url_name %}active{% endif %}">
+            <i class="fas fa-quote-left"></i> Témoignages
+        </a>
+        <a href="{% url 'dashboard_activities' %}" class="sidebar-link {% if 'activit' in request.resolver_match.url_name %}active{% endif %}">
+            <i class="fas fa-map-marked-alt"></i> Activités & Destinations
+        </a>
+
+        <div class="nav-section-label">Système</div>
+        <a href="{% url 'dashboard_email_settings' %}" class="sidebar-link {% if 'email' in request.resolver_match.url_name %}active{% endif %}">
+            <i class="fas fa-envelope-open-text"></i> Emails automatiques
+        </a>
+        {% endif %}
+        {% if not dashboard_is_director %}
+        <a href="{% url 'dashboard_contact_messages' %}" class="sidebar-link {% if 'contact' in request.resolver_match.url_name %}active{% endif %}">
+            <i class="fas fa-inbox"></i> Messages de contact
+            {% load content_tags %}{% get_new_contact_count as nb_new %}{% if nb_new %}<span class="badge ms-auto" style="background:#C9A96E;color:#1A1D27;font-size:.65rem;padding:2px 7px;border-radius:20px">{{ nb_new }}</span>{% endif %}
+        </a>
+        {% endif %}
+
+        <div class="nav-section-label">Aperçu</div>
+        <a href="{% url 'home' %}" target="_blank" class="sidebar-link">
+            <i class="fas fa-globe"></i> Voir le site <i class="fas fa-external-link-alt ms-auto" style="font-size:0.55rem;opacity:.5"></i>
+        </a>
+    </nav>
+    <div class="sidebar-footer">
+        <div class="sidebar-user">
+            <div class="sidebar-user-avatar" style="background:{% if dashboard_is_admin %}linear-gradient(135deg,#C9A96E,#A8854A){% elif dashboard_is_manager %}linear-gradient(135deg,#3B82F6,#1D4ED8){% else %}linear-gradient(135deg,#8B5CF6,#6D28D9){% endif %}">
+                {% if dashboard_is_admin %}A{% elif dashboard_is_manager %}G{% else %}D{% endif %}
+            </div>
+            <div class="sidebar-user-info">
+                <strong>{% if dashboard_role_info %}{{ dashboard_role_info.label }}{% else %}Utilisateur{% endif %}</strong>
+                <span style="color:{% if dashboard_is_admin %}#C9A96E{% elif dashboard_is_manager %}#3B82F6{% else %}#8B5CF6{% endif %}">
+                    {% if dashboard_is_admin %}Accès complet{% elif dashboard_is_manager %}Réservations{% else %}Lecture seule{% endif %}
+                </span>
+            </div>
+            <a href="{% url 'dashboard_logout' %}" title="Déconnexion"><i class="fas fa-sign-out-alt"></i></a>
+        </div>
+    </div>
+</aside>
+
+<div class="main-content">
+    <div class="topbar">
+        <div class="topbar-title">
+            {% block page_title %}Dashboard{% endblock %}
+            <span>{% block page_subtitle %}{% endblock %}</span>
+        </div>
+        <div class="topbar-actions">{% block topbar_actions %}{% endblock %}</div>
+    </div>
+
+    {% if messages %}
+    <div style="padding:12px 24px 0">
+        {% for msg in messages %}
+        <div class="alert alert-{{ msg.tags }} alert-dismissible fade show">
+            <i class="fas fa-{% if msg.tags == 'success' %}check-circle{% else %}exclamation-circle{% endif %} me-2"></i>
+            {{ msg }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="page-body">{% block content %}{% endblock %}</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

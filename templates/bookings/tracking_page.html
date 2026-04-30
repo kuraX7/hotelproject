@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Suivre ma réservation — Hôtel Al Andalus{% endblock %}
+
+{% block content %}
+{% load content_tags %}{% get_hotel_info as pg_info %}
+
+<!-- Hero -->
+<section class="page-hero" style="height:240px">
+  <div class="page-hero-overlay"></div>
+  <div style="position:absolute;inset:0;{% if pg_info and pg_info.hero_booking_image_url %}background-image:url('{{ pg_info.hero_booking_image_url }}');background-size:cover;background-position:center{% else %}background:linear-gradient(135deg,#1A1D27,#2C2C2C){% endif %}"></div>
+  <div class="container page-hero-content">
+    <nav aria-label="breadcrumb"><ol class="breadcrumb breadcrumb-light">
+      <li class="breadcrumb-item"><a href="{% url 'home' %}">Accueil</a></li>
+      <li class="breadcrumb-item active">Suivi de réservation</li>
+    </ol></nav>
+    <h1 class="page-hero-title">Suivre ma réservation</h1>
+    <p style="color:rgba(255,255,255,.65);font-size:.88rem;margin-top:6px">
+      Consultez, modifiez ou annulez votre réservation
+    </p>
+  </div>
+</section>
+
+<section class="py-5" style="background:var(--cream);min-height:60vh">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-6">
+
+        <div style="background:#fff;border-radius:14px;border:1px solid var(--border-light);box-shadow:0 2px 20px rgba(0,0,0,.06);overflow:hidden">
+
+          <div style="background:var(--dark);padding:24px 28px;border-bottom:2px solid var(--gold)">
+            <div style="display:flex;align-items:center;gap:14px">
+              <div style="width:48px;height:48px;border-radius:50%;background:rgba(201,169,110,.15);border:1px solid rgba(201,169,110,.4);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                <i class="fas fa-search" style="color:var(--gold);font-size:1.1rem"></i>
+              </div>
+              <div>
+                <h2 style="color:#fff;font-family:var(--font-serif);font-size:1.4rem;margin:0 0 2px">Retrouver ma réservation</h2>
+                <p style="color:rgba(255,255,255,.6);font-size:.82rem;margin:0">Saisissez votre référence et votre email</p>
+              </div>
+            </div>
+          </div>
+
+          <form method="post" action="{% url 'tracking_search' %}" style="padding:28px">
+            {% csrf_token %}
+
+            <div style="margin-bottom:18px">
+              <label style="display:block;font-size:.78rem;color:var(--dark);text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:6px">
+                Code de réservation
+              </label>
+              <input type="text" name="code" required autofocus
+                     placeholder="ex: AL00042"
+                     value="{{ request.POST.code }}"
+                     style="width:100%;padding:12px 14px;border:1px solid var(--border-light);border-radius:8px;font-size:.95rem;font-family:var(--font-sans);letter-spacing:.08em;text-transform:uppercase"
+                     onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border-light)'">
+              <small style="color:#6B7280;font-size:.72rem;margin-top:4px;display:block">
+                <i class="fas fa-info-circle me-1" style="color:var(--gold)"></i>
+                Le code figure sur votre reçu de confirmation
+              </small>
+            </div>
+
+            <div style="margin-bottom:22px">
+              <label style="display:block;font-size:.78rem;color:var(--dark);text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:6px">
+                Email utilisé lors de la réservation
+              </label>
+              <input type="email" name="email" required
+                     placeholder="votre@email.com"
+                     value="{{ request.POST.email }}"
+                     style="width:100%;padding:12px 14px;border:1px solid var(--border-light);border-radius:8px;font-size:.95rem"
+                     onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border-light)'">
+            </div>
+
+            <button type="submit"
+                    style="width:100%;padding:14px;background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:#fff;border:none;border-radius:10px;font-size:.88rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:all .3s"
+                    onmouseover="this.style.background='var(--dark)';this.style.color='var(--gold)'"
+                    onmouseout="this.style.background='linear-gradient(135deg,var(--gold),var(--gold-dark))';this.style.color='#fff'">
+              <i class="fas fa-search me-2"></i>Rechercher ma réservation
+            </button>
+          </form>
+
+          <div style="background:var(--cream);padding:18px 28px;border-top:1px solid var(--border-light)">
+            <p style="font-size:.8rem;color:#555;margin:0;text-align:center">
+              Vous n'avez pas encore de réservation ?
+              <a href="{% url 'room_list' %}" style="color:var(--gold-dark);font-weight:600;text-decoration:none">Voir les chambres disponibles</a>
+            </p>
+          </div>
+
+        </div>
+
+        <!-- Aide -->
+        <div style="margin-top:20px;text-align:center">
+          <p style="font-size:.82rem;color:#6B7280;margin:0">
+            <i class="fas fa-headset me-1" style="color:var(--gold)"></i>
+            Besoin d'aide ? Contactez-nous au
+            {% if pg_info %}<strong style="color:var(--dark)">{{ pg_info.phone }}</strong>{% endif %}
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

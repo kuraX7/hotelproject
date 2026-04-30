@@ -1,0 +1,261 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}Règles de la maison{% endblock %}
+{% block page_title %}Règles de la maison{% endblock %}
+{% block page_subtitle %}Modifiez toutes les règles affichées sur le site{% endblock %}
+{% block topbar_actions %}
+<a href="{% url 'hotel_rules' %}" target="_blank" class="topbar-btn">
+  <i class="fas fa-eye me-1"></i>Voir sur le site
+</a>
+{% endblock %}
+
+{% block content %}
+<form method="post" id="rulesForm">
+{% csrf_token %}
+
+<div class="row g-4">
+<div class="col-lg-8">
+
+  <!-- ── HORAIRES ── -->
+  <div class="form-card mb-4">
+    <div class="form-section-title" style="font-size:.75rem;font-weight:600;color:#6B7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:18px;display:flex;align-items:center;gap:8px">
+      <i class="fas fa-clock" style="color:#C9A96E"></i> Horaires d'arrivée & départ
+      <span style="flex:1;height:1px;background:#F3F4F6;display:block"></span>
+    </div>
+    <div class="row g-3">
+      <div class="col-md-3">
+        <label class="form-label">Check-in à partir de</label>
+        <input type="time" name="checkin_from" class="form-control" value="{{ r.checkin_from|time:'H:i' }}">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Check-in jusqu'à</label>
+        <input type="time" name="checkin_until" class="form-control" value="{{ r.checkin_until|time:'H:i' }}">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Check-out à partir de</label>
+        <input type="time" name="checkout_from" class="form-control" value="{{ r.checkout_from|time:'H:i' }}">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Check-out jusqu'à</label>
+        <input type="time" name="checkout_until" class="form-control" value="{{ r.checkout_until|time:'H:i' }}">
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ANNULATION ── -->
+  <div class="form-card mb-4">
+    <div class="form-section-title" style="font-size:.75rem;font-weight:600;color:#6B7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:18px;display:flex;align-items:center;gap:8px">
+      <i class="fas fa-info-circle" style="color:#C9A96E"></i> Annulation & Prépaiement
+      <span style="flex:1;height:1px;background:#F3F4F6;display:block"></span>
+    </div>
+    <div class="row g-3">
+      <div class="col-12">
+        <label class="form-label">Politique d'annulation</label>
+        <textarea name="cancellation_policy" class="form-control" rows="3">{{ r.cancellation_policy }}</textarea>
+      </div>
+      <div class="col-12">
+        <label class="form-label">Politique de prépaiement <span style="color:#9CA3AF;font-size:.78rem">(optionnel)</span></label>
+        <textarea name="prepayment_policy" class="form-control" rows="2">{{ r.prepayment_policy }}</textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ENFANTS ── -->
+  <div class="form-card mb-4">
+    <div class="form-section-title" style="font-size:.75rem;font-weight:600;color:#6B7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:18px;display:flex;align-items:center;gap:8px">
+      <i class="fas fa-child" style="color:#C9A96E"></i> Enfants & Lits
+      <span style="flex:1;height:1px;background:#F3F4F6;display:block"></span>
+    </div>
+    <div class="row g-3">
+      <div class="col-12">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:12px;background:#F9FAFB;border-radius:8px;border:1px solid #E5E7EB;font-size:.85rem">
+          <input type="checkbox" name="children_allowed" {% if r.children_allowed %}checked{% endif %} style="width:16px;height:16px;accent-color:#10B981">
+          <span><strong>Enfants acceptés</strong> dans l'établissement</span>
+        </label>
+      </div>
+      <div class="col-12">
+        <label class="form-label">Conditions relatives aux enfants</label>
+        <textarea name="children_policy" class="form-control" rows="3">{{ r.children_policy }}</textarea>
+      </div>
+      <div class="col-12">
+        <div style="background:#F9FAFB;border:1px solid #E5E7EB;border-radius:10px;padding:16px">
+          <div style="font-weight:600;font-size:.83rem;margin-bottom:12px;color:#374151">Lit bébé</div>
+          <div class="row g-3">
+            <div class="col-12">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.83rem">
+                <input type="checkbox" name="baby_cot_available" {% if r.baby_cot_available %}checked{% endif %} style="width:15px;height:15px;accent-color:#C9A96E">
+                Lit bébé disponible sur demande
+              </label>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" style="font-size:.78rem">Tranche d'âge</label>
+              <input type="text" name="baby_cot_age_range" class="form-control form-control-sm" value="{{ r.baby_cot_age_range }}" placeholder="0 – 3 ans">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" style="font-size:.78rem">Prix</label>
+              <input type="text" name="baby_cot_price" class="form-control form-control-sm" value="{{ r.baby_cot_price }}" placeholder="Gratuit / 150 MAD / nuit">
+            </div>
+          </div>
+          <div style="margin-top:14px;border-top:1px solid #E5E7EB;padding-top:14px">
+            <div style="font-weight:600;font-size:.83rem;margin-bottom:10px;color:#374151">Lit d'appoint</div>
+            <div class="row g-3">
+              <div class="col-12">
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.83rem">
+                  <input type="checkbox" name="extra_bed_available" {% if r.extra_bed_available %}checked{% endif %} style="width:15px;height:15px;accent-color:#C9A96E">
+                  Lit d'appoint disponible
+                </label>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" style="font-size:.78rem">Prix</label>
+                <input type="text" name="extra_bed_price" class="form-control form-control-sm" value="{{ r.extra_bed_price }}" placeholder="200 MAD / nuit">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ÂGE / ANIMAUX / FUMEURS / FÊTES ── -->
+  <div class="form-card mb-4">
+    <div class="form-section-title" style="font-size:.75rem;font-weight:600;color:#6B7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:18px;display:flex;align-items:center;gap:8px">
+      <i class="fas fa-list-check" style="color:#C9A96E"></i> Règles générales
+      <span style="flex:1;height:1px;background:#F3F4F6;display:block"></span>
+    </div>
+    <div class="row g-3">
+
+      <!-- Age restriction -->
+      <div class="col-12">
+        <div style="background:#F9FAFB;border:1px solid #E5E7EB;border-radius:10px;padding:14px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+            <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:.85rem">
+              <input type="checkbox" name="age_restriction" id="ageChk" {% if r.age_restriction %}checked{% endif %} style="width:15px;height:15px;accent-color:#C9A96E">
+              <strong>Restriction d'âge</strong> à l'enregistrement
+            </label>
+          </div>
+          <div id="ageMinWrap" style="display:{% if r.age_restriction %}block{% else %}none{% endif %}">
+            <label class="form-label" style="font-size:.78rem">Âge minimum</label>
+            <input type="number" name="age_minimum" class="form-control form-control-sm" value="{{ r.age_minimum }}" min="0" max="100" style="max-width:120px">
+          </div>
+          <div id="ageNotesWrap">
+            <label class="form-label" style="font-size:.78rem;margin-top:8px">Message affiché</label>
+            <input type="text" name="age_restriction_notes" class="form-control form-control-sm" value="{{ r.age_restriction_notes }}">
+          </div>
+        </div>
+      </div>
+
+      <!-- Pets -->
+      <div class="col-12">
+        <div style="background:#F9FAFB;border:1px solid #E5E7EB;border-radius:10px;padding:14px">
+          <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:.85rem;margin-bottom:10px">
+            <input type="checkbox" name="pets_allowed" {% if r.pets_allowed %}checked{% endif %} style="width:15px;height:15px;accent-color:#10B981">
+            <strong>Animaux domestiques acceptés</strong>
+          </label>
+          <label class="form-label" style="font-size:.78rem">Texte à afficher</label>
+          <textarea name="pets_policy" class="form-control form-control-sm" rows="2">{{ r.pets_policy }}</textarea>
+        </div>
+      </div>
+
+      <!-- Smoking -->
+      <div class="col-md-6">
+        <div style="background:#F9FAFB;border:1px solid #E5E7EB;border-radius:10px;padding:14px;height:100%">
+          <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:.85rem;margin-bottom:10px">
+            <input type="checkbox" name="smoking_allowed" {% if r.smoking_allowed %}checked{% endif %} style="width:15px;height:15px;accent-color:#F59E0B">
+            <strong>Fumeurs autorisés</strong>
+          </label>
+          <textarea name="smoking_notes" class="form-control form-control-sm" rows="3">{{ r.smoking_notes }}</textarea>
+        </div>
+      </div>
+
+      <!-- Parties -->
+      <div class="col-md-6">
+        <div style="background:#F9FAFB;border:1px solid #E5E7EB;border-radius:10px;padding:14px;height:100%">
+          <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:.85rem;margin-bottom:10px">
+            <input type="checkbox" name="parties_allowed" {% if r.parties_allowed %}checked{% endif %} style="width:15px;height:15px;accent-color:#8B5CF6">
+            <strong>Fêtes / Événements autorisés</strong>
+          </label>
+          <textarea name="parties_notes" class="form-control form-control-sm" rows="3">{{ r.parties_notes }}</textarea>
+        </div>
+      </div>
+
+      <!-- Groups -->
+      <div class="col-12">
+        <label class="form-label"><i class="fas fa-users me-1" style="color:#C9A96E"></i>Politique groupes</label>
+        <textarea name="groups_policy" class="form-control" rows="2">{{ r.groups_policy }}</textarea>
+      </div>
+
+      <!-- Additional rules -->
+      <div class="col-12">
+        <label class="form-label"><i class="fas fa-list me-1" style="color:#C9A96E"></i>Règles supplémentaires <span style="color:#9CA3AF;font-size:.78rem">(optionnel)</span></label>
+        <textarea name="additional_rules" class="form-control" rows="3" placeholder="Autres règles spécifiques à votre établissement...">{{ r.additional_rules }}</textarea>
+        <div class="form-text">Une règle par ligne. Ex: Chaussures interdites dans les chambres.</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:12px">
+    <button type="submit" class="btn-gold px-5 py-2" style="font-size:.9rem">
+      <i class="fas fa-save me-2"></i>Enregistrer toutes les modifications
+    </button>
+    <a href="{% url 'hotel_rules' %}" target="_blank" class="topbar-btn">
+      <i class="fas fa-eye me-1"></i>Aperçu
+    </a>
+  </div>
+
+</div><!-- col-8 -->
+
+<!-- RIGHT: Payment methods -->
+<div class="col-lg-4">
+  <div class="form-card" style="position:sticky;top:90px">
+    <div class="form-section-title" style="font-size:.75rem;font-weight:600;color:#6B7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:18px;display:flex;align-items:center;gap:8px">
+      <i class="fas fa-credit-card" style="color:#C9A96E"></i> Moyens de paiement
+      <span style="flex:1;height:1px;background:#F3F4F6;display:block"></span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+
+      <!-- Payment methods rendered directly below -->
+
+      <label style="display:flex;align-items:center;gap:12px;cursor:pointer;padding:12px 14px;background:#F9FAFB;border:2px solid {% if r.accepts_visa %}#C9A96E{% else %}#E5E7EB{% endif %};border-radius:10px" class="pay-lbl">
+        <input type="checkbox" name="accepts_visa" {% if r.accepts_visa %}checked{% endif %} style="width:17px;height:17px;accent-color:#C9A96E" onchange="this.closest('label').style.borderColor=this.checked?'#C9A96E':'#E5E7EB'">
+        <div style="width:46px;height:28px;background:#1A1F71;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="color:#fff;font-size:.6rem;font-weight:700">VISA</span></div>
+        <span style="font-weight:500;font-size:.85rem;color:#374151">Visa</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:12px;cursor:pointer;padding:12px 14px;background:#F9FAFB;border:2px solid {% if r.accepts_mastercard %}#C9A96E{% else %}#E5E7EB{% endif %};border-radius:10px" class="pay-lbl">
+        <input type="checkbox" name="accepts_mastercard" {% if r.accepts_mastercard %}checked{% endif %} style="width:17px;height:17px;accent-color:#C9A96E" onchange="this.closest('label').style.borderColor=this.checked?'#C9A96E':'#E5E7EB'">
+        <div style="width:46px;height:28px;background:#EB001B;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="color:#fff;font-size:.6rem;font-weight:700">MC</span></div>
+        <span style="font-weight:500;font-size:.85rem;color:#374151">Mastercard</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:12px;cursor:pointer;padding:12px 14px;background:#F9FAFB;border:2px solid {% if r.accepts_amex %}#C9A96E{% else %}#E5E7EB{% endif %};border-radius:10px" class="pay-lbl">
+        <input type="checkbox" name="accepts_amex" {% if r.accepts_amex %}checked{% endif %} style="width:17px;height:17px;accent-color:#C9A96E" onchange="this.closest('label').style.borderColor=this.checked?'#C9A96E':'#E5E7EB'">
+        <div style="width:46px;height:28px;background:#007BC1;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="color:#fff;font-size:.6rem;font-weight:700">AMEX</span></div>
+        <span style="font-weight:500;font-size:.85rem;color:#374151">American Express</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:12px;cursor:pointer;padding:12px 14px;background:#F9FAFB;border:2px solid {% if r.accepts_cmi %}#C9A96E{% else %}#E5E7EB{% endif %};border-radius:10px" class="pay-lbl">
+        <input type="checkbox" name="accepts_cmi" {% if r.accepts_cmi %}checked{% endif %} style="width:17px;height:17px;accent-color:#C9A96E" onchange="this.closest('label').style.borderColor=this.checked?'#C9A96E':'#E5E7EB'">
+        <div style="width:46px;height:28px;background:#1A1D27;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="color:#C9A96E;font-size:.6rem;font-weight:700">CMI</span></div>
+        <span style="font-weight:500;font-size:.85rem;color:#374151">CMI (cartes marocaines)</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:12px;cursor:pointer;padding:12px 14px;background:#F9FAFB;border:2px solid {% if r.accepts_cash %}#C9A96E{% else %}#E5E7EB{% endif %};border-radius:10px" class="pay-lbl">
+        <input type="checkbox" name="accepts_cash" {% if r.accepts_cash %}checked{% endif %} style="width:17px;height:17px;accent-color:#C9A96E" onchange="this.closest('label').style.borderColor=this.checked?'#C9A96E':'#E5E7EB'">
+        <div style="width:46px;height:28px;background:#10B981;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="color:#fff;font-size:.6rem;font-weight:700">CASH</span></div>
+        <span style="font-weight:500;font-size:.85rem;color:#374151">Espèces</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:12px;cursor:pointer;padding:12px 14px;background:#F9FAFB;border:2px solid {% if r.accepts_bank_transfer %}#C9A96E{% else %}#E5E7EB{% endif %};border-radius:10px" class="pay-lbl">
+        <input type="checkbox" name="accepts_bank_transfer" {% if r.accepts_bank_transfer %}checked{% endif %} style="width:17px;height:17px;accent-color:#C9A96E" onchange="this.closest('label').style.borderColor=this.checked?'#C9A96E':'#E5E7EB'">
+        <div style="width:46px;height:28px;background:#6B7280;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="color:#fff;font-size:.6rem;font-weight:700">VIR.</span></div>
+        <span style="font-weight:500;font-size:.85rem;color:#374151">Virement bancaire</span>
+      </label>
+    </div>
+  </div>
+</div>
+
+</div><!-- row -->
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('ageChk').addEventListener('change', function() {
+  document.getElementById('ageMinWrap').style.display = this.checked ? 'block' : 'none';
+});
+</script>
+{% endblock %}

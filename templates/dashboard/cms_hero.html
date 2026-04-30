@@ -1,0 +1,124 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}Section Hero{% endblock %}
+{% block page_title %}Section Hero{% endblock %}
+{% block page_subtitle %}Page d'accueil — Bannière principale{% endblock %}
+{% block topbar_actions %}
+<a href="{% url 'home' %}" target="_blank" class="topbar-btn"><i class="fas fa-eye me-1"></i>Aperçu du site</a>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-7">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-card mb-4">
+                <div class="form-section">
+                    <div class="form-section-title"><i class="fas fa-heading" style="color:#C9A96E"></i> Titres de la bannière</div>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Ligne 1 <span style="color:#9CA3AF;font-size:0.75rem">(petit texte au-dessus)</span></label>
+                            <input type="text" name="title_line1" class="form-control" value="{{ hero.title_line1 }}">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Ligne 2 <span style="color:#C9A96E;font-size:0.75rem">★ Grande ligne dorée</span></label>
+                            <input type="text" name="title_line2" class="form-control" value="{{ hero.title_line2 }}" style="font-size:1rem;font-weight:600;border-color:#C9A96E">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Ligne 3 <span style="color:#9CA3AF;font-size:0.75rem">(petit texte en-dessous)</span></label>
+                            <input type="text" name="title_line3" class="form-control" value="{{ hero.title_line3 }}">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Badge (étoiles · ville · date)</label>
+                            <input type="text" name="badge_text" class="form-control" value="{{ hero.badge_text }}">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Sous-titre / Description</label>
+                            <textarea name="subtitle" class="form-control" rows="3">{{ hero.subtitle }}</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="form-section-title"><i class="fas fa-mouse-pointer" style="color:#C9A96E"></i> Boutons d'action</div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Bouton principal (doré)</label>
+                            <input type="text" name="btn_primary_text" class="form-control" value="{{ hero.btn_primary_text }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Bouton secondaire (contour)</label>
+                            <input type="text" name="btn_secondary_text" class="form-control" value="{{ hero.btn_secondary_text }}">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section" style="border:none;margin:0;padding:0">
+                    <div class="form-section-title"><i class="fas fa-image" style="color:#C9A96E"></i> Image de fond</div>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">URL de l'image (Unsplash, etc.)</label>
+                            <input type="url" name="bg_image_url" class="form-control" value="{{ hero.bg_image_url }}" placeholder="https://images.unsplash.com/..." id="bgUrlInput" oninput="previewBg(this.value)">
+                            <div class="form-text">Recommandé : 1920×1080px, format paysage</div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Ou uploader une image</label>
+                            <input type="file" name="bg_image_file" class="form-control" accept="image/*" onchange="previewFile(this)">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button type="submit" class="btn-gold px-5 py-2" style="font-size:.9rem">
+                <i class="fas fa-save me-2"></i>Enregistrer les modifications
+            </button>
+        </form>
+    </div>
+
+    <!-- Live preview -->
+    <div class="col-lg-5">
+        <div class="data-card" style="position:sticky;top:80px">
+            <div class="data-card-header"><div class="data-card-title"><i class="fas fa-eye"></i> Aperçu en temps réel</div></div>
+            <div style="position:relative;height:280px;overflow:hidden;border-radius:0 0 12px 12px;" id="heroPreview">
+                <div id="heroBg" style="position:absolute;inset:0;background-image:url('{{ hero.get_bg_image }}');background-size:cover;background-position:center;"></div>
+                <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.3),rgba(0,0,0,.7))"></div>
+                <div style="position:relative;z-index:2;height:100%;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;">
+                    <div>
+                        <div style="border:1px solid rgba(201,169,110,.5);color:#C9A96E;font-size:0.55rem;letter-spacing:.25em;padding:4px 14px;border-radius:20px;margin-bottom:12px;display:inline-block" id="prev-badge">{{ hero.badge_text }}</div>
+                        <div style="color:rgba(255,255,255,.8);font-size:0.8rem" id="prev-l1">{{ hero.title_line1 }}</div>
+                        <div style="color:#C9A96E;font-size:1.6rem;font-weight:700;font-family:Georgia,serif;line-height:1.1" id="prev-l2">{{ hero.title_line2 }}</div>
+                        <div style="color:rgba(255,255,255,.8);font-size:0.8rem;margin-bottom:10px" id="prev-l3">{{ hero.title_line3 }}</div>
+                        <div style="font-size:0.65rem;color:rgba(255,255,255,.6);max-width:260px;margin:0 auto" id="prev-sub">{{ hero.subtitle|truncatechars:80 }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function syncField(name, previewId) {
+    const input = document.querySelector('[name="' + name + '"]');
+    if (input) input.addEventListener('input', function() {
+        const el = document.getElementById(previewId);
+        if (el) el.textContent = this.value;
+    });
+}
+syncField('title_line1','prev-l1');
+syncField('title_line2','prev-l2');
+syncField('title_line3','prev-l3');
+syncField('subtitle','prev-sub');
+syncField('badge_text','prev-badge');
+
+function previewBg(url) {
+    if (url) document.getElementById('heroBg').style.backgroundImage = "url('" + url + "')";
+}
+function previewFile(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = e => document.getElementById('heroBg').style.backgroundImage = "url('" + e.target.result + "')";
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,289 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}{{ action }} une chambre{% endblock %}
+{% block page_title %}{{ action }} une chambre{% endblock %}
+{% block page_subtitle %}{% if room %}{{ room.name }}{% else %}Nouvelle chambre{% endif %}{% endblock %}
+{% block topbar_actions %}
+<a href="{% url 'dashboard_rooms' %}" class="topbar-btn"><i class="fas fa-arrow-left"></i> Retour</a>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+
+  <!-- ── FORMULAIRE PRINCIPAL ── -->
+  <div class="col-lg-7">
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+
+      <!-- Infos générales -->
+      <div class="form-card mb-4">
+        <div class="form-section-title" style="font-size:.75rem;font-weight:600;color:#6B7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:16px;display:flex;align-items:center;gap:8px">
+          <i class="fas fa-info-circle" style="color:#C9A96E"></i> Informations générales
+          <span style="flex:1;height:1px;background:#F3F4F6;display:block"></span>
+        </div>
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label">Nom de la chambre <span style="color:#EF4444">*</span></label>
+            <input type="text" name="name" class="form-control" required
+              value="{% if room %}{{ room.name }}{% endif %}"
+              placeholder="Ex: Suite Royale Atlas">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Catégorie</label>
+            <select name="category" class="form-select">
+              <option value="jardin"    {% if room.category == 'jardin'    or not room %}selected{% endif %}>Vue sur jardin</option>
+              <option value="piscine"   {% if room.category == 'piscine'   %}selected{% endif %}>Vue sur piscine</option>
+              <option value="familiale" {% if room.category == 'familiale' %}selected{% endif %}>Familiale</option>
+              <option value="suite"     {% if room.category == 'suite'     %}selected{% endif %}>Suite</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Statut</label>
+            <select name="status" class="form-select">
+              <option value="available"   {% if room.status == 'available'   or not room %}selected{% endif %}>✅ Disponible</option>
+              <option value="occupied"    {% if room.status == 'occupied'    %}selected{% endif %}>🔴 Occupée</option>
+              <option value="maintenance" {% if room.status == 'maintenance' %}selected{% endif %}>🔧 Maintenance</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Prix/nuit (MAD) <span style="color:#EF4444">*</span></label>
+            <input type="number" name="price" class="form-control" required min="0" step="0.01"
+              value="{% if room %}{{ room.price }}{% endif %}"
+              placeholder="1200">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Capacité (personnes max)</label>
+            <input type="number" name="capacity" class="form-control" min="1" max="20"
+              value="{% if room %}{{ room.capacity }}{% else %}2{% endif %}">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Superficie (m²)</label>
+            <input type="number" name="size" class="form-control" min="1"
+              value="{% if room %}{{ room.size }}{% else %}25{% endif %}">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Nombre de chambres de ce type</label>
+            <input type="number" name="room_count" class="form-control" min="1"
+              value="{% if room %}{{ room.room_count }}{% else %}1{% endif %}">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Prix barré (optionnel)</label>
+            <input type="number" name="original_price" class="form-control" step="0.01"
+              value="{% if room and room.original_price %}{{ room.original_price }}{% endif %}"
+              placeholder="Ex: 2812 (avant réduction)">
+          </div>
+          <div class="col-12">
+            <label class="form-label">Configuration des lits</label>
+            <input type="text" name="bed_config" class="form-control"
+              value="{% if room %}{{ room.bed_config }}{% endif %}"
+              placeholder="Ex: 1 lit double ou 2 lits simples">
+          </div>
+          <div class="col-12">
+            <label class="form-label">Description <span style="color:#EF4444">*</span></label>
+            <textarea name="description" class="form-control" rows="4" required
+              placeholder="Décrivez cette chambre en détail...">{% if room %}{{ room.description }}{% endif %}</textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Équipements — rendu depuis le contexte amenities_rows (pas de filtres custom) -->
+      <div class="form-card mb-4">
+        <div class="form-section-title" style="font-size:.75rem;font-weight:600;color:#6B7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:16px;display:flex;align-items:center;gap:8px">
+          <i class="fas fa-concierge-bell" style="color:#C9A96E"></i> Équipements
+          <span style="flex:1;height:1px;background:#F3F4F6;display:block"></span>
+        </div>
+        <div class="row g-3">
+          {% for row in amenities_rows %}
+          <div class="col-6 col-md-3">
+            <label class="amenity-lbl" for="chk_{{ row.field }}"
+              style="display:flex;flex-direction:column;align-items:center;gap:7px;background:#F9FAFB;border:2px solid {% if row.checked %}#C9A96E{% else %}#E5E7EB{% endif %};border-radius:10px;padding:14px 8px;cursor:pointer;transition:border-color .2s,background .2s;background:{% if row.checked %}rgba(201,169,110,.07){% else %}#F9FAFB{% endif %}">
+              <i class="{{ row.icon }}" style="font-size:1.3rem;color:{{ row.color }}"></i>
+              <input type="checkbox" name="{{ row.field }}" id="chk_{{ row.field }}"
+                {% if row.checked %}checked{% endif %}
+                style="width:18px;height:18px;accent-color:#C9A96E;cursor:pointer"
+                onchange="syncCard(this)">
+              <span style="font-size:.73rem;color:#374151;font-weight:500;text-align:center">{{ row.label }}</span>
+            </label>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Image principale -->
+      <div class="form-card mb-4">
+        <div class="form-section-title" style="font-size:.75rem;font-weight:600;color:#6B7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:14px;display:flex;align-items:center;gap:8px">
+          <i class="fas fa-image" style="color:#C9A96E"></i> Image principale
+          <span style="flex:1;height:1px;background:#F3F4F6;display:block"></span>
+        </div>
+        {% if room and room.image %}
+        <div style="margin-bottom:10px">
+          <img src="{{ room.image.url }}" style="width:100%;height:160px;object-fit:cover;border-radius:8px;border:1px solid #E5E7EB">
+          <p style="font-size:.72rem;color:#9CA3AF;margin-top:4px">Image actuelle — choisissez un fichier pour la remplacer.</p>
+        </div>
+        {% endif %}
+        <input type="file" name="image" class="form-control" accept="image/*" onchange="previewMainImg(this)">
+        <div id="mainImgWrap" style="display:none;margin-top:10px">
+          <img id="mainImgPrev" style="width:100%;height:160px;object-fit:cover;border-radius:8px;border:2px solid #C9A96E">
+        </div>
+      </div>
+
+      <!-- Inclusions -->
+      <div class="form-card mb-4">
+        <div class="form-section-title" style="font-size:.75rem;font-weight:600;color:#6B7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:16px;display:flex;align-items:center;gap:8px">
+          <i class="fas fa-gift" style="color:#C9A96E"></i> Inclusions & Options
+          <span style="flex:1;height:1px;background:#F3F4F6;display:block"></span>
+        </div>
+        <div class="row g-3">
+          {% for f, lbl in include_options %}
+          <div class="col-6 col-md-3">
+            <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:.82rem;padding:10px;background:#F9FAFB;border-radius:8px;border:1px solid #E5E7EB">
+              <input type="checkbox" name="{{ f }}"
+                {% if room %}{% if f == 'includes_breakfast' and room.includes_breakfast %}checked{% endif %}{% if f == 'includes_parking' and room.includes_parking %}checked{% endif %}{% if f == 'free_cancellation' and room.free_cancellation %}checked{% endif %}{% if f == 'no_prepayment' and room.no_prepayment %}checked{% endif %}{% if f == 'has_garden_view' and room.has_garden_view %}checked{% endif %}{% if f == 'has_pool_view' and room.has_pool_view %}checked{% endif %}{% if f == 'has_terrace' and room.has_terrace %}checked{% endif %}{% if f == 'has_soundproofing' and room.has_soundproofing %}checked{% endif %}{% if f == 'has_private_bathroom' and room.has_private_bathroom %}checked{% endif %}{% else %}{% if f == 'includes_breakfast' or f == 'includes_parking' or f == 'free_cancellation' or f == 'no_prepayment' or f == 'has_private_bathroom' %}checked{% endif %}{% endif %}
+                style="width:15px;height:15px;accent-color:#C9A96E">
+              {{ lbl }}
+            </label>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <button type="submit" class="btn-gold px-5 py-2" style="font-size:.9rem">
+          <i class="fas fa-save me-2"></i>{{ action }} la chambre
+        </button>
+        <a href="{% url 'dashboard_rooms' %}" class="topbar-btn">Annuler</a>
+      </div>
+    </form>
+  </div>
+
+  <!-- ── GALERIE ── -->
+  <div class="col-lg-5">
+    {% if room %}
+    <!-- Formulaire ajout photo -->
+    <div class="form-card mb-4">
+      <div class="form-section-title" style="font-size:.75rem;font-weight:600;color:#6B7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:14px;display:flex;align-items:center;gap:8px">
+        <i class="fas fa-cloud-upload-alt" style="color:#C9A96E"></i> Ajouter une photo
+        <span style="flex:1;height:1px;background:#F3F4F6;display:block"></span>
+      </div>
+      <form method="post" action="{% url 'dashboard_room_image_add' room.id %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="row g-2">
+          <div class="col-12">
+            <label class="form-label" style="font-size:.78rem">URL image (Unsplash, etc.)</label>
+            <input type="url" name="image_url" class="form-control form-control-sm"
+              placeholder="https://images.unsplash.com/photo-..."
+              oninput="prevUrl(this.value)">
+          </div>
+          <div style="text-align:center;font-size:.72rem;color:#9CA3AF;padding:2px 0">— ou —</div>
+          <div class="col-12">
+            <label class="form-label" style="font-size:.78rem">Upload depuis votre PC</label>
+            <input type="file" name="image_file" class="form-control form-control-sm"
+              accept="image/*" onchange="prevFile(this)">
+          </div>
+          <div id="prevWrap" style="display:none" class="col-12">
+            <img id="prevImg" style="width:100%;height:130px;object-fit:cover;border-radius:8px;border:2px solid #C9A96E">
+          </div>
+          <div class="col-12">
+            <input type="text" name="caption" class="form-control form-control-sm"
+              placeholder="Légende (ex: Vue panoramique sur l'Atlantique)">
+          </div>
+          <div class="col-6">
+            <label style="display:flex;align-items:center;gap:7px;font-size:.78rem;cursor:pointer;padding:8px;background:#F9FAFB;border-radius:8px;border:1px solid #E5E7EB">
+              <input type="checkbox" name="is_primary" style="width:15px;height:15px;accent-color:#C9A96E">
+              ★ Principale
+            </label>
+          </div>
+          <div class="col-6">
+            <label style="display:flex;align-items:center;gap:7px;font-size:.78rem;cursor:pointer;padding:8px;background:#F9FAFB;border-radius:8px;border:1px solid #3B82F6">
+              <input type="checkbox" name="is_360" style="width:15px;height:15px;accent-color:#3B82F6">
+              360° VR
+            </label>
+          </div>
+          <div class="col-12 mt-1">
+            <button type="submit" class="btn-gold w-100 justify-content-center" style="padding:9px">
+              <i class="fas fa-plus me-2"></i>Ajouter la photo
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Galerie existante -->
+    {% if images %}
+    <div class="data-card">
+      <div class="data-card-header">
+        <div class="data-card-title"><i class="fas fa-images"></i> Photos ({{ images|length }})</div>
+      </div>
+      <div style="padding:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+        {% for img in images %}
+        <div style="position:relative;border-radius:9px;overflow:hidden;border:2px solid {% if img.is_primary %}#C9A96E{% else %}#E5E7EB{% endif %}">
+          <img src="{{ img.get_image_src }}" style="width:100%;height:82px;object-fit:cover;display:block">
+          <div style="position:absolute;top:3px;left:3px;display:flex;gap:2px;flex-wrap:wrap">
+            {% if img.is_primary %}<span style="background:#C9A96E;color:#fff;font-size:.5rem;padding:1px 5px;border-radius:8px;font-weight:700">★</span>{% endif %}
+            {% if img.is_360 %}<span style="background:#3B82F6;color:#fff;font-size:.5rem;padding:1px 5px;border-radius:8px;font-weight:700">360°</span>{% endif %}
+          </div>
+          <form method="post" action="{% url 'dashboard_room_image_delete' img.id %}" style="position:absolute;top:3px;right:3px">
+            {% csrf_token %}
+            <button type="submit" onclick="return confirm('Supprimer cette photo ?')"
+              style="background:rgba(239,68,68,.85);border:none;color:#fff;width:22px;height:22px;border-radius:6px;font-size:.62rem;cursor:pointer;display:flex;align-items:center;justify-content:center">
+              <i class="fas fa-times"></i>
+            </button>
+          </form>
+          {% if img.caption %}
+          <div style="padding:2px 5px;background:rgba(0,0,0,.6);font-size:.58rem;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;position:absolute;bottom:0;left:0;right:0">
+            {{ img.caption }}
+          </div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:28px;color:#9CA3AF;background:#F9FAFB;border:1px dashed #E5E7EB;border-radius:10px">
+      <i class="fas fa-images" style="font-size:1.8rem;margin-bottom:8px;display:block"></i>
+      <p style="font-size:.82rem;margin:0">Aucune photo encore. Ajoutez-en une ci-dessus.</p>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <!-- Nouvelle chambre : galerie pas encore disponible -->
+    <div style="background:#F9FAFB;border:2px dashed #E5E7EB;border-radius:12px;text-align:center;padding:44px 24px;color:#9CA3AF">
+      <i class="fas fa-images" style="font-size:2rem;margin-bottom:10px;display:block"></i>
+      <p style="font-size:.83rem;margin:0;line-height:1.5">Enregistrez la chambre d'abord,<br>puis ajoutez les photos depuis cette page.</p>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Sync amenity card border color when checkbox is toggled
+function syncCard(cb) {
+  const lbl = cb.closest('label');
+  lbl.style.borderColor = cb.checked ? '#C9A96E' : '#E5E7EB';
+  lbl.style.background  = cb.checked ? 'rgba(201,169,110,.07)' : '#F9FAFB';
+}
+
+// Image previews
+function prevUrl(url) {
+  const w = document.getElementById('prevWrap');
+  if (url) { document.getElementById('prevImg').src = url; w.style.display = 'block'; }
+  else w.style.display = 'none';
+}
+function prevFile(input) {
+  if (input.files && input.files[0]) {
+    const r = new FileReader();
+    r.onload = e => { document.getElementById('prevImg').src = e.target.result; document.getElementById('prevWrap').style.display = 'block'; };
+    r.readAsDataURL(input.files[0]);
+  }
+}
+function previewMainImg(input) {
+  if (input.files && input.files[0]) {
+    const r = new FileReader();
+    r.onload = e => { document.getElementById('mainImgPrev').src = e.target.result; document.getElementById('mainImgWrap').style.display = 'block'; };
+    r.readAsDataURL(input.files[0]);
+  }
+}
+</script>
+{% endblock %}

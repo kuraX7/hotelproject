@@ -1,0 +1,209 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}FAQ — Questions fréquentes — Hôtel Al Andalus{% endblock %}
+
+{% block extra_css %}
+<style>
+.faq-item { border: 1px solid #E5E7EB; border-radius: 10px; overflow: hidden; margin-bottom: 10px; transition: box-shadow .2s; }
+.faq-item:hover { box-shadow: 0 2px 12px rgba(0,0,0,.06); }
+.faq-question {
+    width: 100%; background: #fff; border: none; padding: 18px 20px;
+    display: flex; justify-content: space-between; align-items: flex-start;
+    gap: 12px; cursor: pointer; text-align: left; transition: background .15s;
+}
+.faq-question:hover { background: #FAFAFA; }
+.faq-question.open { background: #FFFBF5; border-bottom: 1px solid #F3F4F6; }
+.faq-q-text { font-weight: 700; font-size: .9rem; color: #111; line-height: 1.4; }
+.faq-icon { color: #6B7280; font-size: .75rem; margin-top: 3px; flex-shrink: 0; transition: transform .25s; }
+.faq-icon.rotated { transform: rotate(180deg); }
+.faq-answer { display: none; padding: 16px 20px; background: #fff; font-size: .88rem; color: #555; line-height: 1.75; }
+.faq-answer.open { display: block; animation: fadeIn .2s ease; }
+.faq-answer ul { margin: 8px 0 0 0; padding-left: 0; list-style: none; }
+.faq-answer ul li { padding: 4px 0; display: flex; align-items: flex-start; gap: 8px; }
+.faq-answer ul li::before { content: '○'; color: #C9A96E; font-size: .7rem; margin-top: 4px; flex-shrink: 0; }
+.faq-cat-pill { display: inline-flex; align-items: center; gap: 5px; background: rgba(201,169,110,.1); color: #C9A96E; font-size: .6rem; font-weight: 700; padding: 2px 9px; border-radius: 20px; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 4px; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Filter tabs */
+.faq-filter-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
+.faq-filter-btn { padding: 6px 16px; border-radius: 20px; border: 1px solid #E5E7EB; background: #fff; font-size: .78rem; font-weight: 500; color: #555; cursor: pointer; transition: all .2s; font-family: inherit; }
+.faq-filter-btn:hover, .faq-filter-btn.active { background: var(--gold); border-color: var(--gold); color: #fff; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<section class="page-hero" style="height:240px">
+  <div class="page-hero-overlay"></div>
+  <div style="position:absolute;inset:0;background:linear-gradient(135deg,#1A1D27,#2C2C2C)"></div>
+  <div class="container page-hero-content">
+    <nav aria-label="breadcrumb"><ol class="breadcrumb breadcrumb-light">
+      <li class="breadcrumb-item"><a href="{% url 'home' %}">Accueil</a></li>
+      <li class="breadcrumb-item active">FAQ</li>
+    </ol></nav>
+    <h1 class="page-hero-title">Questions fréquentes</h1>
+    <p style="color:rgba(255,255,255,.65);font-size:.9rem;margin-top:6px">
+      Tout ce que vous devez savoir avant votre séjour à l'Hôtel Al Andalus
+    </p>
+  </div>
+</section>
+
+<section class="py-5" style="background:#FAF8F4">
+<div class="container">
+
+  <!-- Search bar -->
+  <div style="max-width:520px;margin:0 auto 32px;position:relative">
+    <i class="fas fa-search" style="position:absolute;left:16px;top:50%;transform:translateY(-50%);color:#9CA3AF;font-size:.9rem"></i>
+    <input type="text" id="faq-search" class="form-control"
+      style="padding:13px 16px 13px 44px;border-radius:30px;border:1px solid #E5E7EB;font-size:.9rem;box-shadow:0 2px 12px rgba(0,0,0,.06)"
+      placeholder="Rechercher une question...">
+  </div>
+
+  <!-- Category filter -->
+  <div class="faq-filter-bar justify-content-center">
+    <button class="faq-filter-btn active" onclick="filterFaq('all',this)">Toutes</button>
+    {% for val, label in categories %}
+    <button class="faq-filter-btn" onclick="filterFaq('{{ val }}',this)">{{ label }}</button>
+    {% endfor %}
+  </div>
+
+  <!-- 2-column FAQ grid -->
+  <div id="faq-empty" style="display:none;text-align:center;padding:40px;color:#9CA3AF">
+    <i class="fas fa-search" style="font-size:2rem;margin-bottom:12px;display:block"></i>
+    <p>Aucune question ne correspond à votre recherche.</p>
+  </div>
+
+  <div class="row g-4" id="faq-grid">
+    <!-- Column 1 -->
+    <div class="col-lg-6" id="faq-col-1">
+      {% for faq in faqs %}
+      {% if forloop.counter|divisibleby:2 == False or forloop.first %}
+      <div class="faq-item" data-category="{{ faq.category }}" data-question="{{ faq.question|lower }}">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          <span class="faq-q-text">{{ faq.question }}</span>
+          <i class="fas fa-chevron-down faq-icon"></i>
+        </button>
+        <div class="faq-answer">
+          <p>{{ faq.answer|linebreaksbr }}</p>
+          {% with items=faq.get_answer_items_list %}
+          {% if items %}
+          <ul>{% for item in items %}<li>{{ item }}</li>{% endfor %}</ul>
+          {% endif %}
+          {% endwith %}
+        </div>
+      </div>
+      {% endif %}
+      {% endfor %}
+    </div>
+    <!-- Column 2 -->
+    <div class="col-lg-6" id="faq-col-2">
+      {% for faq in faqs %}
+      {% if forloop.counter|divisibleby:2 %}
+      <div class="faq-item" data-category="{{ faq.category }}" data-question="{{ faq.question|lower }}">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          <span class="faq-q-text">{{ faq.question }}</span>
+          <i class="fas fa-chevron-down faq-icon"></i>
+        </button>
+        <div class="faq-answer">
+          <p>{{ faq.answer|linebreaksbr }}</p>
+          {% with items=faq.get_answer_items_list %}
+          {% if items %}
+          <ul>{% for item in items %}<li>{{ item }}</li>{% endfor %}</ul>
+          {% endif %}
+          {% endwith %}
+        </div>
+      </div>
+      {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div style="text-align:center;margin-top:40px;padding:32px;background:#fff;border-radius:14px;border:1px solid #E5E7EB">
+    <div style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:600;color:#111;margin-bottom:8px">
+      Vous n'avez pas trouvé votre réponse ?
+    </div>
+    <p style="color:#6B7280;font-size:.88rem;margin-bottom:16px">
+      Notre équipe est disponible 24h/24 pour répondre à toutes vos questions.
+    </p>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+      {% if info %}
+      <a href="tel:{{ info.phone }}" class="btn btn-gold px-4">
+        <i class="fas fa-phone me-2"></i>{{ info.phone }}
+      </a>
+      <a href="mailto:{{ info.email }}" class="btn btn-outline-dark px-4">
+        <i class="fas fa-envelope me-2"></i>{{ info.email }}
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ── Toggle accordion ───────────────────────────────
+function toggleFaq(btn) {
+  const answer = btn.nextElementSibling;
+  const icon   = btn.querySelector('.faq-icon');
+  const isOpen = btn.classList.contains('open');
+
+  // Close all others in same column
+  btn.closest('.col-lg-6').querySelectorAll('.faq-question.open').forEach(b => {
+    if (b !== btn) {
+      b.classList.remove('open');
+      b.nextElementSibling.classList.remove('open');
+      b.querySelector('.faq-icon').classList.remove('rotated');
+    }
+  });
+
+  if (isOpen) {
+    btn.classList.remove('open');
+    answer.classList.remove('open');
+    icon.classList.remove('rotated');
+  } else {
+    btn.classList.add('open');
+    answer.classList.add('open');
+    icon.classList.add('rotated');
+  }
+}
+
+// ── Filter by category ─────────────────────────────
+function filterFaq(cat, btn) {
+  document.querySelectorAll('.faq-filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  document.querySelectorAll('.faq-item').forEach(item => {
+    const match = cat === 'all' || item.dataset.category === cat;
+    item.style.display = match ? 'block' : 'none';
+  });
+  checkEmpty();
+}
+
+// ── Live search ────────────────────────────────────
+document.getElementById('faq-search').addEventListener('input', function() {
+  const q = this.value.toLowerCase().trim();
+  document.querySelectorAll('.faq-item').forEach(item => {
+    const text = (item.dataset.question + ' ' + item.innerText).toLowerCase();
+    item.style.display = (!q || text.includes(q)) ? 'block' : 'none';
+    // Auto-open if search matches
+    if (q && text.includes(q)) {
+      const btn = item.querySelector('.faq-question');
+      const ans = item.querySelector('.faq-answer');
+      btn.classList.add('open');
+      ans.classList.add('open');
+      btn.querySelector('.faq-icon').classList.add('rotated');
+    }
+  });
+  checkEmpty();
+});
+
+function checkEmpty() {
+  const visible = document.querySelectorAll('.faq-item[style*="block"], .faq-item:not([style])');
+  const allHidden = [...document.querySelectorAll('.faq-item')].every(i => i.style.display === 'none');
+  document.getElementById('faq-empty').style.display = allHidden ? 'block' : 'none';
+}
+</script>
+{% endblock %}

@@ -1,0 +1,437 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ room.name }} — Hôtel Al Andalus{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── GALLERY ── */
+.gallery-wrap { position:relative; }
+.gallery-main-img { width:100%; height:420px; object-fit:cover; border-radius:12px; cursor:zoom-in; display:block; transition:transform .3s; }
+.gallery-main-img:hover { transform:scale(1.01); }
+.gallery-counter { position:absolute; bottom:14px; right:14px; background:rgba(0,0,0,.6); color:#fff; font-size:.75rem; padding:4px 12px; border-radius:20px; backdrop-filter:blur(4px); }
+.gallery-zoom-btn { position:absolute; bottom:14px; left:14px; background:rgba(0,0,0,.55); color:#fff; border:none; cursor:pointer; font-size:.78rem; padding:5px 12px; border-radius:20px; backdrop-filter:blur(4px); }
+
+.thumbs-row { display:flex; gap:8px; margin-top:10px; overflow-x:auto; padding-bottom:4px; }
+.thumb-item { width:80px; height:62px; flex-shrink:0; border-radius:8px; overflow:hidden; cursor:pointer; border:2px solid transparent; transition:all .2s; }
+.thumb-item:hover { border-color:#C9A96E; transform:translateY(-2px); }
+.thumb-item.active { border-color:#C9A96E; }
+.thumb-item img { width:100%; height:100%; object-fit:cover; display:block; }
+
+/* ── LIGHTBOX ── */
+.lb-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.92); z-index:9999; align-items:center; justify-content:center; }
+.lb-overlay.open { display:flex; }
+.lb-img { max-width:90vw; max-height:88vh; object-fit:contain; border-radius:8px; }
+.lb-close { position:fixed; top:18px; right:22px; background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.2); color:#fff; width:40px; height:40px; border-radius:50%; font-size:1.2rem; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:10000; }
+.lb-nav { position:fixed; top:50%; transform:translateY(-50%); background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.2); color:#fff; width:44px; height:44px; border-radius:50%; font-size:1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:10000; transition:background .2s; }
+.lb-nav:hover { background:rgba(201,169,110,.5); }
+.lb-prev { left:18px; }
+.lb-next { right:18px; }
+.lb-caption { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,.65); color:#fff; padding:8px 20px; border-radius:30px; font-size:.82rem; z-index:10000; white-space:nowrap; max-width:90vw; overflow:hidden; text-overflow:ellipsis; }
+.lb-counter { position:fixed; top:20px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,.55); color:rgba(255,255,255,.75); padding:4px 14px; border-radius:20px; font-size:.72rem; z-index:10000; }
+
+/* ── BOOKING WIDGET ── */
+.booking-widget { background:#fff; border-radius:14px; border:1px solid var(--border-light); overflow:hidden; position:sticky; top:90px; box-shadow:0 4px 24px rgba(0,0,0,.08); }
+.bw-header { background:var(--dark); padding:18px 20px; border-bottom:2px solid var(--gold); }
+.bw-price-og { color:rgba(255,255,255,.45); font-size:.78rem; text-decoration:line-through; }
+.bw-price { font-size:1.9rem; font-weight:700; color:var(--gold); font-family:'Cormorant Garamond',serif; }
+.bw-price small { font-size:.75rem; font-weight:400; color:rgba(255,255,255,.5); }
+.bw-discount { display:inline-block; background:var(--gold); color:var(--dark); font-size:.7rem; font-weight:700; padding:3px 10px; border-radius:4px; margin-top:4px; letter-spacing:.04em; }
+.bw-options { padding:14px 18px; border-bottom:1px solid var(--border-light); }
+.bw-opt { display:flex; align-items:flex-start; gap:8px; font-size:.8rem; color:#555; margin-bottom:7px; line-height:1.4; }
+.bw-opt:last-child { margin-bottom:0; }
+.bw-opt-check { color:var(--gold); font-weight:700; flex-shrink:0; }
+.bw-opt-label { font-weight:700; color:var(--gold-dark); }
+.bw-cal { padding:14px 18px; border-bottom:1px solid var(--border-light); }
+.bw-book-btn { display:block; margin:16px 18px; padding:14px; background:linear-gradient(135deg,var(--gold),var(--gold-dark)); color:#fff; text-decoration:none; text-align:center; border-radius:10px; font-size:.92rem; font-weight:600; letter-spacing:.06em; text-transform:uppercase; transition:all .3s; }
+.bw-book-btn:hover { background:var(--dark); color:var(--gold) !important; transform:translateY(-2px); box-shadow:0 6px 20px rgba(201,169,110,.35); }
+.bw-guarantee { padding:0 18px 16px; display:flex; flex-direction:column; gap:5px; }
+.bw-g-item { display:flex; align-items:center; gap:7px; font-size:.72rem; color:#6B7280; }
+
+/* ── SPECS ── */
+.specs-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:20px; }
+.spec-box { background:var(--cream); border:1px solid var(--border-light); border-radius:10px; padding:14px 10px; text-align:center; }
+.spec-val { font-family:'Cormorant Garamond',serif; font-size:1.5rem; font-weight:600; color:var(--dark); }
+.spec-lbl { font-size:.68rem; color:#9CA3AF; text-transform:uppercase; letter-spacing:.08em; margin-top:2px; }
+
+/* ── AMENITIES ── */
+.amenity-pill { display:inline-flex; align-items:center; gap:6px; background:#fff; border:1px solid var(--border-light); color:var(--dark); font-size:.8rem; padding:6px 12px; border-radius:20px; margin:3px; }
+.amenity-pill i { color:var(--gold); font-size:.75rem; }
+.amenity-pill.included { background:#FFF8EC; border-color:var(--gold-light); color:var(--gold-dark); }
+.amenity-pill.included i { color:var(--gold); }
+
+/* ── INCLUSIONS ── */
+.incl-item { display:flex; align-items:flex-start; gap:10px; padding:10px 0; border-bottom:1px solid var(--border-light); font-size:.85rem; color:#555; }
+.incl-item:last-child { border-bottom:none; }
+.incl-check { color:var(--gold); font-weight:700; font-size:.95rem; flex-shrink:0; margin-top:1px; }
+.incl-label { font-weight:600; color:var(--gold-dark); }
+
+/* ── SECTION HEADER ── */
+.detail-section { margin-bottom:28px; }
+.detail-section-title { font-family:'Cormorant Garamond',serif; font-size:1.2rem; font-weight:600; color:var(--dark); margin-bottom:12px; padding-bottom:8px; border-bottom:2px solid var(--border-light); display:flex; align-items:center; gap:8px; }
+.detail-section-title::after { content:''; flex:1; height:2px; background:linear-gradient(90deg,var(--gold),transparent); display:block; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+{% load content_tags %}{% get_hotel_info as pg_info %}
+<div style="background:var(--cream);border-bottom:1px solid var(--border-light);padding:12px 0">
+  <div class="container">
+    <nav aria-label="breadcrumb">
+      <ol style="display:flex;align-items:center;gap:6px;list-style:none;margin:0;padding:0;font-size:.8rem;color:#9CA3AF">
+        <li><a href="{% url 'home' %}" style="color:rgba(201,169,110,.7);text-decoration:none">Accueil</a></li>
+        <li style="color:var(--gold-light)">›</li>
+        <li><a href="{% url 'room_list' %}" style="color:rgba(201,169,110,.7);text-decoration:none">Chambres & Suites</a></li>
+        <li style="color:var(--gold-light)">›</li>
+        <li style="color:var(--dark);font-weight:600">{{ room.name }}</li>
+      </ol>
+    </nav>
+  </div>
+</div>
+
+<section class="py-4" style="background:var(--cream)">
+<div class="container">
+<div class="row g-4">
+
+  <!-- LEFT: Gallery + Details -->
+  <div class="col-lg-8">
+
+    <!-- GALERIE -->
+    <div class="gallery-wrap mb-4">
+      <div style="position:relative">
+        {% with all_images=room.images.all %}
+        {% if all_images %}
+          {% with primary=all_images|first %}
+          <img src="{{ primary.get_image_src }}" alt="{{ room.name }}"
+            class="gallery-main-img" id="main-img"
+            onclick="openLightbox(0)">
+          {% endwith %}
+        {% else %}
+          <div style="width:100%;height:420px;border-radius:12px;background:var(--cream);display:flex;align-items:center;justify-content:center;font-size:4rem">🛏</div>
+        {% endif %}
+        <div class="gallery-counter" id="img-counter">
+          1 / {{ room.images.count }}
+        </div>
+        <button class="gallery-zoom-btn" onclick="openLightbox(currentImg)">
+          <i class="fas fa-expand me-1"></i>Voir en grand
+        </button>
+        {% endwith %}
+      </div>
+
+      <!-- Thumbnails -->
+      {% if room.images.count > 1 %}
+      <div class="thumbs-row">
+        {% for img in room.images.all %}
+        <div class="thumb-item {% if forloop.first %}active{% endif %}"
+          id="thumb-{{ forloop.counter0 }}"
+          onclick="switchImg('{{ img.get_image_src|escapejs }}', {{ forloop.counter0 }}, '{{ img.caption|escapejs }}')">
+          <img src="{{ img.get_image_src }}" alt="{{ img.caption }}">
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- TITRE + PRIX MOBILE -->
+    <div class="d-lg-none mb-4" style="background:#fff;border-radius:12px;padding:16px;border:1px solid #E5E7EB">
+      <h1 style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:600;color:#111;margin-bottom:6px">{{ room.name }}</h1>
+      {% if room.original_price %}
+      <div style="color:#999;font-size:.85rem;text-decoration:line-through">{{ room.original_price|floatformat:0 }} MAD / nuit</div>
+      {% endif %}
+      <div style="font-size:1.6rem;font-weight:700;color:var(--dark);font-family:'Cormorant Garamond',serif">
+        {{ room.price|floatformat:0 }} MAD <span style="font-size:.8rem;font-weight:400;color:#9CA3AF">/ nuit</span>
+      </div>
+    </div>
+
+    <!-- CARACTÉRISTIQUES -->
+    <div class="detail-section">
+      <div class="detail-section-title"><i class="fas fa-info-circle" style="color:#C9A96E;font-size:.9rem"></i>Caractéristiques</div>
+
+      <div class="specs-grid">
+        <div class="spec-box">
+          <div class="spec-val">{{ room.size }}</div>
+          <div class="spec-lbl">m²</div>
+        </div>
+        <div class="spec-box">
+          <div class="spec-val">{{ room.capacity }}</div>
+          <div class="spec-lbl">Personne{{ room.capacity|pluralize }}</div>
+        </div>
+        <div class="spec-box">
+          <div class="spec-val">{{ room.room_count }}</div>
+          <div class="spec-lbl">Disponibles</div>
+        </div>
+      </div>
+
+      {% if room.bed_config %}
+      <div style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:10px;padding:12px 16px;margin-bottom:16px">
+        <div style="font-size:.78rem;font-weight:600;color:#92400E;margin-bottom:6px;text-transform:uppercase;letter-spacing:.08em">
+          <i class="fas fa-bed me-1"></i>Configuration des lits
+        </div>
+        {% if room.bed_options %}
+        {% for opt in room.bed_options %}
+        <div style="display:flex;align-items:center;gap:8px;font-size:.85rem;color:#78350F;padding:2px 0">
+          <span style="width:10px;height:10px;border-radius:50%;border:2px solid #F59E0B;flex-shrink:0"></span>
+          {{ opt }}
+        </div>
+        {% endfor %}
+        <div style="font-size:.72rem;color:#92400E;margin-top:6px;font-style:italic">(sous réserve de disponibilité)</div>
+        {% else %}
+        <div style="font-size:.85rem;color:#78350F">{{ room.bed_config }}</div>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <!-- Availability status -->
+      {% if general_avail.urgency == 'full' %}
+      <div style="background:#FEE2E2;border:1px solid #FECACA;border-radius:10px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;gap:12px">
+        <i class="fas fa-times-circle" style="color:#EF4444;font-size:1.2rem;flex-shrink:0"></i>
+        <div>
+          <div style="font-weight:700;color:#991B1B;font-size:.88rem">Chambre actuellement complète</div>
+          <div style="font-size:.78rem;color:#B91C1C;margin-top:2px">Toutes les {{ general_avail.rooms_total }} chambres de ce type sont réservées. Consultez le calendrier pour les dates disponibles.</div>
+        </div>
+      </div>
+      {% elif general_avail.urgency == 'high' %}
+      <div style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:10px;padding:12px 18px;margin-bottom:16px;display:flex;align-items:center;gap:10px">
+        <i class="fas fa-fire" style="color:#F59E0B;font-size:1rem;flex-shrink:0"></i>
+        <div style="font-size:.82rem;color:#92400E">
+          <strong>Forte demande !</strong> {{ general_avail.message }} sur {{ general_avail.rooms_total }} au total.
+        </div>
+      </div>
+      {% elif general_avail.urgency == 'medium' %}
+      <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;padding:10px 16px;margin-bottom:14px;display:flex;align-items:center;gap:8px">
+        <i class="fas fa-info-circle" style="color:#3B82F6;font-size:.9rem;flex-shrink:0"></i>
+        <div style="font-size:.8rem;color:#1E40AF">{{ general_avail.message }}</div>
+      </div>
+      {% endif %}
+
+      <!-- Description -->
+      <p style="font-size:.9rem;color:#555;line-height:1.8">{{ room.description }}</p>
+    </div>
+
+    <!-- ÉQUIPEMENTS -->
+    <div class="detail-section">
+      <div class="detail-section-title"><i class="fas fa-concierge-bell" style="color:#C9A96E;font-size:.9rem"></i>Équipements</div>
+      <div>
+        {% if room.has_wifi %}<span class="amenity-pill"><i class="fas fa-wifi"></i>WiFi haut débit</span>{% endif %}
+        {% if room.has_ac %}<span class="amenity-pill"><i class="fas fa-snowflake"></i>Climatisation</span>{% endif %}
+        {% if room.has_balcony %}<span class="amenity-pill"><i class="fas fa-archway"></i>Balcon privé</span>{% endif %}
+        {% if room.has_garden_view %}<span class="amenity-pill"><i class="fas fa-tree"></i>Vue sur jardin</span>{% endif %}
+        {% if room.has_pool_view %}<span class="amenity-pill"><i class="fas fa-swimming-pool"></i>Vue sur piscine</span>{% endif %}
+        {% if room.has_sea_view %}<span class="amenity-pill"><i class="fas fa-water"></i>Vue sur mer</span>{% endif %}
+        {% if room.has_tv %}<span class="amenity-pill"><i class="fas fa-tv"></i>TV écran plat</span>{% endif %}
+        {% if room.has_minibar %}<span class="amenity-pill"><i class="fas fa-glass-martini-alt"></i>Minibar</span>{% endif %}
+        {% if room.has_safe %}<span class="amenity-pill"><i class="fas fa-lock"></i>Coffre-fort</span>{% endif %}
+        {% if room.has_bathtub %}<span class="amenity-pill"><i class="fas fa-bath"></i>Baignoire</span>{% endif %}
+        {% if room.has_private_bathroom %}<span class="amenity-pill"><i class="fas fa-sink"></i>Salle de bains privative</span>{% endif %}
+        {% if room.has_terrace %}<span class="amenity-pill"><i class="fas fa-umbrella-beach"></i>Terrasse</span>{% endif %}
+        {% if room.has_soundproofing %}<span class="amenity-pill"><i class="fas fa-volume-mute"></i>Insonorisation</span>{% endif %}
+        <span class="amenity-pill"><i class="fas fa-coffee"></i>Machine à café</span>
+        <span class="amenity-pill"><i class="fas fa-concierge-bell"></i>Room service 24h</span>
+        <span class="amenity-pill"><i class="fas fa-soap"></i>Produits de toilette</span>
+        <span class="amenity-pill"><i class="fas fa-tshirt"></i>Sèche-cheveux</span>
+        <span class="amenity-pill"><i class="fas fa-archive"></i>Armoire / Penderie</span>
+      </div>
+    </div>
+
+    <!-- INCLUSIONS -->
+    <div class="detail-section">
+      <div class="detail-section-title"><i class="fas fa-gift" style="color:#C9A96E;font-size:.9rem"></i>Inclus dans votre séjour</div>
+      <div style="background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:4px 16px">
+        {% if room.includes_breakfast %}
+        <div class="incl-item">
+          <span class="incl-check">✓</span>
+          <div><span class="incl-label">Petit-déjeuner continental compris</span><br><span style="font-size:.78rem;color:#9CA3AF">Servi tous les matins de 7h à 10h30</span></div>
+        </div>
+        {% endif %}
+        {% if room.includes_parking %}
+        <div class="incl-item">
+          <span class="incl-check">✓</span>
+          <div><span class="incl-label">Parking gratuit — 1 place sécurisée</span><br><span style="font-size:.78rem;color:#9CA3AF">+ Enregistrement tardif + Internet haut débit</span></div>
+        </div>
+        {% endif %}
+        {% if room.free_cancellation %}
+        <div class="incl-item">
+          <span class="incl-check">✓</span>
+          <div><span class="incl-label">Annulation gratuite</span> avant 48h<br><span style="font-size:.78rem;color:#9CA3AF">Au-delà, la première nuit est facturée</span></div>
+        </div>
+        {% endif %}
+        {% if room.no_prepayment %}
+        <div class="incl-item">
+          <span class="incl-check">✓</span>
+          <div><span class="incl-label">Aucun prépaiement requis</span><br><span style="font-size:.78rem;color:#9CA3AF">Payez sur place à votre arrivée</span></div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- CALENDRIER DISPONIBILITÉ -->
+    <div class="detail-section">
+      <div class="detail-section-title"><i class="fas fa-calendar-alt" style="color:#C9A96E;font-size:.9rem"></i>Disponibilité</div>
+      <div id="availability-calendar"></div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT: Booking Widget -->
+  <div class="col-lg-4 d-none d-lg-block">
+    <div class="booking-widget">
+      <div class="bw-header">
+        <div style="font-size:.65rem;color:rgba(255,255,255,.5);letter-spacing:.2em;text-transform:uppercase;margin-bottom:4px">✦ Al Andalus — Tarif direct</div>
+        {% if room.original_price %}
+        <div class="bw-price-og">{{ room.original_price|floatformat:0 }} MAD</div>
+        {% endif %}
+        <div class="bw-price">{{ room.price|floatformat:0 }} MAD <small>/ nuit TTC</small></div>
+        {% if room.original_price %}
+        <div>
+          <span class="bw-discount">
+            -{% widthratio room.price room.original_price 100 %}% — Meilleur tarif direct
+          </span>
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="bw-options">
+        {% if room.includes_breakfast %}
+        <div class="bw-opt"><span class="bw-opt-check">✓</span><span>Petit-déjeuner continental compris</span></div>
+        {% endif %}
+        {% if room.includes_parking %}
+        <div class="bw-opt"><span class="bw-opt-check">✓</span>
+          <span><span class="bw-opt-label">1 place de parking</span> + enregistrement tardif + Internet</span>
+        </div>
+        {% endif %}
+        {% if room.free_cancellation %}
+        <div class="bw-opt"><span class="bw-opt-check">✓</span>
+          <span><span class="bw-opt-label">Annulation gratuite</span> avant 48h</span>
+        </div>
+        {% endif %}
+        {% if room.no_prepayment %}
+        <div class="bw-opt"><span class="bw-opt-check">✓</span>
+          <span><span class="bw-opt-label">Aucun prépaiement</span> — Payez sur place</span>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Mini calendar -->
+      <div class="bw-cal">
+        <div id="availability-calendar-mini"></div>
+      </div>
+
+      {% if general_avail.urgency == 'full' %}
+      <div class="bw-book-btn" style="background:#9CA3AF;cursor:not-allowed;transform:none;box-shadow:none">
+        <i class="fas fa-times-circle me-2"></i>Complet — choisissez d'autres dates
+      </div>
+      {% else %}
+      <a href="{% url 'book_room' room.id %}" class="bw-book-btn" id="book-link">
+        <i class="fas fa-calendar-check me-2"></i>Réserver cette chambre
+      </a>
+      {% endif %}
+
+      <div class="bw-guarantee">
+        <div class="bw-g-item"><i class="fas fa-shield-alt" style="color:var(--gold)"></i>Meilleur tarif garanti en direct</div>
+        <div class="bw-g-item"><i class="fas fa-lock" style="color:#3B82F6"></i>Paiement 100% sécurisé</div>
+        <div class="bw-g-item"><i class="fas fa-headset" style="color:#C9A96E"></i>Service conciergerie 24h/24</div>
+      </div>
+    </div>
+
+    <!-- Contact rapide -->
+    <div style="background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:16px;margin-top:12px;text-align:center">
+      <div style="font-size:.78rem;color:#6B7280;margin-bottom:6px"><i class="fas fa-phone me-1" style="color:#C9A96E"></i>Des questions ?</div>
+      {% if info %}
+      <a href="tel:{{ info.phone }}" style="color:var(--gold-dark);font-weight:600;font-size:.9rem;text-decoration:none">{{ info.phone }}</a>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+</div>
+</section>
+
+<!-- ── LIGHTBOX ── -->
+<div class="lb-overlay" id="lightbox" onclick="if(event.target===this)closeLightbox()">
+  <button class="lb-close" onclick="closeLightbox()"><i class="fas fa-times"></i></button>
+  <button class="lb-nav lb-prev" onclick="event.stopPropagation();navigateLb(-1)"><i class="fas fa-chevron-left"></i></button>
+  <img src="" alt="" class="lb-img" id="lb-img" onclick="event.stopPropagation()">
+  <button class="lb-nav lb-next" onclick="event.stopPropagation();navigateLb(1)"><i class="fas fa-chevron-right"></i></button>
+  <div class="lb-caption" id="lb-caption"></div>
+  <div class="lb-counter" id="lb-counter"></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% load static %}
+<script src="{% static 'js/availability_calendar.js' %}"></script>
+<script>
+const allImages = [
+  {% for img in room.images.all %}
+  { src: "{{ img.get_image_src|escapejs }}", caption: "{{ img.caption|escapejs }}" },
+  {% endfor %}
+];
+let currentImg = 0;
+
+function switchImg(src, idx, caption) {
+  document.getElementById('main-img').src = src;
+  document.getElementById('img-counter').textContent = (idx + 1) + ' / ' + allImages.length;
+  document.querySelectorAll('.thumb-item').forEach((t, i) => t.classList.toggle('active', i === idx));
+  currentImg = idx;
+}
+
+function openLightbox(idx) {
+  currentImg = idx;
+  showLbImg();
+  document.getElementById('lightbox').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function showLbImg() {
+  const img = allImages[currentImg];
+  const el = document.getElementById('lb-img');
+  el.style.opacity = '0';
+  el.src = img.src;
+  el.onload = () => { el.style.transition = 'opacity .2s'; el.style.opacity = '1'; };
+  document.getElementById('lb-caption').textContent = img.caption || '{{ room.name }}';
+  document.getElementById('lb-counter').textContent = (currentImg + 1) + ' / ' + allImages.length;
+  document.querySelectorAll('.lb-nav').forEach(b => b.style.display = allImages.length > 1 ? 'flex' : 'none');
+}
+function navigateLb(dir) {
+  currentImg = (currentImg + dir + allImages.length) % allImages.length;
+  showLbImg();
+}
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('lightbox').classList.contains('open')) return;
+  if (e.key === 'ArrowRight') navigateLb(1);
+  if (e.key === 'ArrowLeft')  navigateLb(-1);
+  if (e.key === 'Escape')     closeLightbox();
+});
+
+// ── AVAILABILITY CALENDAR ──────────────────────────────
+const calDataUrl = "{% url 'room_calendar_data' room.id %}";
+const bookingBase = "{% url 'book_room' room.id %}";
+
+function makeCalendar(containerId, mini) {
+  return new AvailabilityCalendar({
+    containerId:   containerId,
+    roomId:        {{ room.id }},
+    pricePerNight: {{ room.price }},
+    calendarUrl:   calDataUrl,
+    onDateSelect: function(ci, co) {
+      const link = document.getElementById('book-link');
+      if (link && ci && co) {
+        link.href = bookingBase + '?check_in=' + ci + '&check_out=' + co;
+      }
+    }
+  });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  if (document.getElementById('availability-calendar')) {
+    makeCalendar('availability-calendar', false);
+  }
+  if (document.getElementById('availability-calendar-mini')) {
+    makeCalendar('availability-calendar-mini', true);
+  }
+});
+</script>
+{% endblock %}

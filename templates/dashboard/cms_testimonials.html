@@ -1,0 +1,135 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}Témoignages{% endblock %}
+{% block page_title %}Témoignages Clients{% endblock %}
+{% block page_subtitle %}{{ testimonials|length }} témoignage{{ testimonials|length|pluralize }}{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Add form -->
+    <div class="col-lg-4">
+        <div class="data-card">
+            <div class="data-card-header"><div class="data-card-title"><i class="fas fa-plus-circle"></i> Ajouter un témoignage</div></div>
+            <div style="padding:16px">
+                <form method="post" action="{% url 'dashboard_testimonial_add' %}">
+                    {% csrf_token %}
+                    <div class="row g-2">
+                        <div class="col-12"><label class="form-label">Nom du client *</label><input type="text" name="name" class="form-control form-control-sm" required placeholder="Ex: Sophie Martin"></div>
+                        <div class="col-12"><label class="form-label">Ville / Pays</label><input type="text" name="origin" class="form-control form-control-sm" placeholder="Paris, France"></div>
+                        <div class="col-12"><label class="form-label">Témoignage *</label><textarea name="text" class="form-control form-control-sm" rows="4" required placeholder="Texte du témoignage..."></textarea></div>
+                        <div class="col-6"><label class="form-label">Note</label>
+                            <select name="rating" class="form-select form-select-sm">
+                                <option value="5" selected>★★★★★</option>
+                                <option value="4">★★★★</option>
+                                <option value="3">★★★</option>
+                            </select>
+                        </div>
+                        <div class="col-6"><label class="form-label">Ordre</label><input type="number" name="order" class="form-control form-control-sm" value="0" min="0"></div>
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="is_featured" id="feat_new" checked>
+                                <label class="form-check-label" for="feat_new" style="font-size:.8rem">Afficher sur l'accueil</label>
+                            </div>
+                        </div>
+                        <div class="col-12 mt-1">
+                            <button type="submit" class="btn-gold w-100 justify-content-center"><i class="fas fa-plus me-2"></i>Ajouter</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- List -->
+    <div class="col-lg-8">
+        {% if testimonials %}
+        <div class="row g-3">
+            {% for t in testimonials %}
+            <div class="col-md-6">
+                <div style="background:#fff;border:1px solid #E5E7EB;border-radius:12px;overflow:hidden;">
+                    <div style="padding:14px;border-bottom:1px solid #F3F4F6;display:flex;align-items:center;justify-content:space-between;">
+                        <div style="display:flex;align-items:center;gap:9px;">
+                            <div style="width:34px;height:34px;background:linear-gradient(135deg,#C9A96E,#A8854A);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:.72rem;font-weight:600;flex-shrink:0">{{ t.initials }}</div>
+                            <div>
+                                <div style="font-weight:600;font-size:.82rem;color:#111">{{ t.name }}</div>
+                                <div style="font-size:.7rem;color:#9CA3AF">{{ t.origin }}</div>
+                            </div>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:6px;">
+                            <span style="color:#F59E0B;font-size:.78rem">{{ t.stars_display }}</span>
+                            <span class="avail-badge {% if t.is_featured %}avail-yes{% else %}avail-no{% endif %}" style="font-size:.65rem">{% if t.is_featured %}Visible{% else %}Masqué{% endif %}</span>
+                        </div>
+                    </div>
+                    <div style="padding:12px 14px;">
+                        <p style="font-style:italic;font-size:.8rem;color:#555;line-height:1.5;margin:0">"{{ t.text|truncatechars:120 }}"</p>
+                    </div>
+                    <div style="padding:10px 14px;border-top:1px solid #F3F4F6;display:flex;gap:8px;">
+                        <button class="topbar-btn" style="flex:1;justify-content:center;font-size:.75rem" onclick="showEditModal({{ t.id }},'{{ t.name|escapejs }}','{{ t.origin|escapejs }}',`{{ t.text|escapejs }}`,{{ t.rating }},{{ t.is_featured|yesno:'true,false' }},{{ t.order }})">
+                            <i class="fas fa-edit me-1"></i>Modifier
+                        </button>
+                        <form method="post" action="{% url 'dashboard_testimonial_delete' t.id %}" onsubmit="return confirm('Supprimer ce témoignage ?')">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-icon danger"><i class="fas fa-trash"></i></button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="data-card">
+            <div class="empty-state"><i class="fas fa-quote-left"></i><p>Aucun témoignage. Ajoutez-en un depuis le formulaire.</p></div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Edit modal -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius:14px;border:none">
+            <div class="modal-header" style="border-bottom:1px solid #F3F4F6;padding:16px 20px">
+                <h6 style="margin:0;font-weight:600">Modifier le témoignage</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" id="editForm">
+                {% csrf_token %}
+                <div class="modal-body" style="padding:20px">
+                    <div class="row g-3">
+                        <div class="col-12"><label class="form-label">Nom</label><input type="text" name="name" id="edit_name" class="form-control"></div>
+                        <div class="col-12"><label class="form-label">Ville / Pays</label><input type="text" name="origin" id="edit_origin" class="form-control"></div>
+                        <div class="col-12"><label class="form-label">Témoignage</label><textarea name="text" id="edit_text" class="form-control" rows="4"></textarea></div>
+                        <div class="col-6"><label class="form-label">Note</label>
+                            <select name="rating" id="edit_rating" class="form-select">
+                                <option value="5">★★★★★</option><option value="4">★★★★</option><option value="3">★★★</option>
+                            </select>
+                        </div>
+                        <div class="col-6"><label class="form-label">Ordre</label><input type="number" name="order" id="edit_order" class="form-control"></div>
+                        <div class="col-12">
+                            <div class="form-check"><input class="form-check-input" type="checkbox" name="is_featured" id="edit_feat"><label class="form-check-label" for="edit_feat" style="font-size:.85rem">Afficher sur l'accueil</label></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top:1px solid #F3F4F6;padding:14px 20px;display:flex;gap:10px">
+                    <button type="button" class="topbar-btn" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn-gold"><i class="fas fa-save me-2"></i>Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showEditModal(id, name, origin, text, rating, featured, order) {
+    document.getElementById('editForm').action = '/dashboard/contenu/temoignages/' + id + '/modifier/';
+    document.getElementById('edit_name').value = name;
+    document.getElementById('edit_origin').value = origin;
+    document.getElementById('edit_text').value = text;
+    document.getElementById('edit_rating').value = rating;
+    document.getElementById('edit_feat').checked = featured;
+    document.getElementById('edit_order').value = order;
+    new bootstrap.Modal(document.getElementById('editModal')).show();
+}
+</script>
+{% endblock %}

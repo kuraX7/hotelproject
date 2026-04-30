@@ -1,0 +1,324 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}Tableau de bord{% endblock %}
+{% block page_title %}Tableau de bord{% endblock %}
+{% block page_subtitle %}Vue d'ensemble · {{ today|date:"d F Y" }}{% endblock %}
+
+{% block content %}
+<!-- KPIs -->
+<div class="row g-3 mb-4">
+    <div class="col-xl-3 col-sm-6">
+        <div class="stat-card">
+            <div class="stat-icon gold"><i class="fas fa-bed"></i></div>
+            <div>
+                <div class="stat-value">{{ total_rooms }}</div>
+                <div class="stat-label">Chambres total</div>
+                <span class="stat-badge up">{{ available_rooms }} disponibles</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+        <div class="stat-card">
+            <div class="stat-icon blue"><i class="fas fa-calendar-check"></i></div>
+            <div>
+                <div class="stat-value">{{ total_bookings }}</div>
+                <div class="stat-label">Réservations total</div>
+                <span class="stat-badge {% if pending_bookings %}warn{% else %}neutral{% endif %}">{{ pending_bookings }} en attente</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+        <div class="stat-card">
+            <div class="stat-icon green"><i class="fas fa-coins"></i></div>
+            <div>
+                <div class="stat-value">{{ revenue_month|floatformat:0 }}</div>
+                <div class="stat-label">Revenu ce mois (MAD)</div>
+                <span class="stat-badge neutral">Total: {{ revenue_total|floatformat:0 }} MAD</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+        <div class="stat-card">
+            <div class="stat-icon purple"><i class="fas fa-suitcase-rolling"></i></div>
+            <div>
+                <div class="stat-value">{{ checkins_today }}</div>
+                <div class="stat-label">Arrivées aujourd'hui</div>
+                <span class="stat-badge neutral">{{ checkouts_today }} départs</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Room status mini-row -->
+<div class="row g-3 mb-4">
+    <div class="col-4">
+        <div style="background:#D1FAE5;border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:10px;">
+            <div style="width:36px;height:36px;background:#10B981;border-radius:9px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:.9rem;flex-shrink:0"><i class="fas fa-check"></i></div>
+            <div><div style="font-size:1.3rem;font-weight:700;color:#065F46">{{ available_rooms }}</div><div style="font-size:0.72rem;color:#047857">Disponibles</div></div>
+        </div>
+    </div>
+    <div class="col-4">
+        <div style="background:#FEE2E2;border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:10px;">
+            <div style="width:36px;height:36px;background:#EF4444;border-radius:9px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:.9rem;flex-shrink:0"><i class="fas fa-user"></i></div>
+            <div><div style="font-size:1.3rem;font-weight:700;color:#991B1B">{{ occupied_rooms }}</div><div style="font-size:0.72rem;color:#B91C1C">Occupées</div></div>
+        </div>
+    </div>
+    <div class="col-4">
+        <div style="background:#FEF3C7;border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:10px;">
+            <div style="width:36px;height:36px;background:#F59E0B;border-radius:9px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:.9rem;flex-shrink:0"><i class="fas fa-tools"></i></div>
+            <div><div style="font-size:1.3rem;font-weight:700;color:#92400E">{{ maintenance_rooms }}</div><div style="font-size:0.72rem;color:#B45309">Maintenance</div></div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Charts -->
+    <div class="col-xl-8">
+        <!-- Line chart -->
+        <div class="data-card mb-4">
+            <div class="data-card-header">
+                <div class="data-card-title"><i class="fas fa-chart-line"></i> Réservations — 6 derniers mois</div>
+            </div>
+            <div style="padding:20px;"><canvas id="bookingChart" height="100"></canvas></div>
+        </div>
+
+        <!-- Recent bookings -->
+        <div class="data-card">
+            <div class="data-card-header">
+                <div class="data-card-title"><i class="fas fa-list-alt"></i> Réservations récentes</div>
+                <a href="{% url 'dashboard_bookings' %}" class="topbar-btn" style="font-size:0.75rem;padding:5px 12px;">Tout voir →</a>
+            </div>
+            {% if recent_bookings %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead><tr><th>Réf.</th><th>Client</th><th>Chambre</th><th>Dates</th><th>Montant</th><th>Statut</th><th></th></tr></thead>
+                    <tbody>
+                    {% for b in recent_bookings %}
+                    <tr>
+                        <td><code style="font-size:.72rem;color:#6B7280">#{{ b.id|stringformat:"04d" }}</code></td>
+                        <td>
+                            <div style="font-weight:500;color:#111;font-size:.82rem">{{ b.name }}</div>
+                            <div style="color:#9CA3AF;font-size:.7rem">{{ b.email }}</div>
+                        </td>
+                        <td style="font-size:.8rem;color:#374151">{{ b.room.name|truncatechars:20 }}</td>
+                        <td style="font-size:.78rem;color:#6B7280">{{ b.check_in|date:"d/m" }} → {{ b.check_out|date:"d/m/Y" }}</td>
+                        <td style="font-weight:600;color:#C9A96E;font-size:.82rem">{{ b.total_price|floatformat:0 }} MAD</td>
+                        <td><span class="status-badge status-{{ b.status }}">{{ b.get_status_display }}</span></td>
+                        <td>
+                            <form method="post" action="{% url 'dashboard_booking_status' b.id %}" style="display:inline">
+                                {% csrf_token %}
+                                <select name="status" class="form-select form-select-sm" style="font-size:.7rem;min-width:110px;border-radius:20px" onchange="this.form.submit()">
+                                    {% for v,l in b.STATUS_CHOICES %}<option value="{{ v }}" {% if b.status == v %}selected{% endif %}>{{ l }}</option>{% endfor %}
+                                </select>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state"><i class="fas fa-calendar-times"></i><p>Aucune réservation.</p></div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Right column -->
+    <div class="col-xl-4">
+        <!-- Donut chart -->
+        <div class="data-card mb-4">
+            <div class="data-card-header"><div class="data-card-title"><i class="fas fa-chart-pie"></i> Revenu par catégorie</div></div>
+            <div style="padding:16px;"><canvas id="catChart" height="180"></canvas></div>
+        </div>
+
+        <!-- Upcoming -->
+        <div class="data-card mb-4">
+            <div class="data-card-header"><div class="data-card-title"><i class="fas fa-suitcase-rolling"></i> Prochaines arrivées</div></div>
+            {% if upcoming %}
+            {% for b in upcoming %}
+            <div style="padding:11px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #F3F4F6;">
+                <div style="width:34px;height:34px;background:linear-gradient(135deg,#C9A96E,#A8854A);border-radius:9px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:0.68rem;font-weight:700;flex-shrink:0;text-align:center;line-height:1.1">{{ b.check_in|date:"d" }}<br>{{ b.check_in|date:"M" }}</div>
+                <div style="flex:1;min-width:0">
+                    <div style="font-weight:500;font-size:.8rem;color:#111;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ b.name }}</div>
+                    <div style="font-size:.7rem;color:#9CA3AF">{{ b.room.name|truncatechars:18 }} · {{ b.nights }}n</div>
+                </div>
+                <span class="status-badge status-{{ b.status }}">{{ b.get_status_display }}</span>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="empty-state" style="padding:28px"><i class="fas fa-check" style="font-size:1.4rem"></i><p style="font-size:.8rem">Aucune arrivée prévue.</p></div>
+            {% endif %}
+        </div>
+
+        <!-- CMS Quick Access -->
+        <div class="data-card">
+            <div class="data-card-header"><div class="data-card-title"><i class="fas fa-edit"></i> Gestion du contenu</div></div>
+            <div style="padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                <a href="{% url 'dashboard_hero' %}" style="text-decoration:none;background:#F9FAFB;border:1px solid #E5E7EB;border-radius:10px;padding:14px 12px;text-align:center;transition:all .2s;display:block" onmouseover="this.style.borderColor='#C9A96E'" onmouseout="this.style.borderColor='#E5E7EB'">
+                    <i class="fas fa-image" style="font-size:1.2rem;color:#C9A96E;display:block;margin-bottom:6px"></i>
+                    <span style="font-size:0.75rem;color:#374151;font-weight:500">Hero</span>
+                </a>
+                <a href="{% url 'dashboard_hotel_info' %}" style="text-decoration:none;background:#F9FAFB;border:1px solid #E5E7EB;border-radius:10px;padding:14px 12px;text-align:center;transition:all .2s;display:block" onmouseover="this.style.borderColor='#C9A96E'" onmouseout="this.style.borderColor='#E5E7EB'">
+                    <i class="fas fa-hotel" style="font-size:1.2rem;color:#3B82F6;display:block;margin-bottom:6px"></i>
+                    <span style="font-size:0.75rem;color:#374151;font-weight:500">Infos Hôtel</span>
+                </a>
+                <a href="{% url 'dashboard_services' %}" style="text-decoration:none;background:#F9FAFB;border:1px solid #E5E7EB;border-radius:10px;padding:14px 12px;text-align:center;transition:all .2s;display:block" onmouseover="this.style.borderColor='#C9A96E'" onmouseout="this.style.borderColor='#E5E7EB'">
+                    <i class="fas fa-concierge-bell" style="font-size:1.2rem;color:#10B981;display:block;margin-bottom:6px"></i>
+                    <span style="font-size:0.75rem;color:#374151;font-weight:500">Services</span>
+                </a>
+                <a href="{% url 'dashboard_testimonials' %}" style="text-decoration:none;background:#F9FAFB;border:1px solid #E5E7EB;border-radius:10px;padding:14px 12px;text-align:center;transition:all .2s;display:block" onmouseover="this.style.borderColor='#C9A96E'" onmouseout="this.style.borderColor='#E5E7EB'">
+                    <i class="fas fa-quote-left" style="font-size:1.2rem;color:#8B5CF6;display:block;margin-bottom:6px"></i>
+                    <span style="font-size:0.75rem;color:#374151;font-weight:500">Témoignages</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ DISPONIBILITÉ EN TEMPS RÉEL ═══ -->
+<div class="row g-4 mt-1">
+    <div class="col-12">
+        <div class="data-card">
+            <div class="data-card-title" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+                <span><i class="fas fa-calendar-check"></i> Disponibilité des chambres</span>
+                <form method="get" action="{% url 'dashboard_home' %}" style="display:flex;align-items:center;gap:8px;margin:0">
+                    <input type="date" name="avail_date" value="{{ avail_date|date:'Y-m-d' }}"
+                           style="padding:6px 10px;border:1px solid #E5E7EB;border-radius:8px;font-size:.82rem;background:#fff;color:#374151"
+                           onchange="this.form.submit()">
+                    <button type="submit" style="padding:6px 14px;background:linear-gradient(135deg,#C9A96E,#A8854A);color:#fff;border:none;border-radius:8px;font-size:.78rem;font-weight:600;cursor:pointer;white-space:nowrap">
+                        <i class="fas fa-search me-1"></i>Voir
+                    </button>
+                </form>
+            </div>
+            <div style="overflow-x:auto;margin-top:14px">
+                <table style="width:100%;border-collapse:collapse;font-size:.85rem">
+                    <thead>
+                        <tr style="background:#F9FAFB;border-bottom:2px solid #E5E7EB">
+                            <th style="text-align:left;padding:10px 14px;color:#6B7280;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;font-weight:600">Type de chambre</th>
+                            <th style="text-align:center;padding:10px 14px;color:#6B7280;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;font-weight:600">Total</th>
+                            <th style="text-align:center;padding:10px 14px;color:#6B7280;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;font-weight:600">Réservées</th>
+                            <th style="text-align:center;padding:10px 14px;color:#6B7280;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;font-weight:600">Libres</th>
+                            <th style="text-align:center;padding:10px 14px;color:#6B7280;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;font-weight:600">Taux</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ra in room_availability %}
+                        <tr style="border-bottom:1px solid #F3F4F6;{% if ra.free == 0 %}background:#FEF2F2{% elif ra.free <= 2 %}background:#FFFBEB{% endif %}">
+                            <td style="padding:11px 14px;font-weight:500;color:#374151">
+                                {{ ra.name }}
+                            </td>
+                            <td style="text-align:center;padding:11px 14px;color:#6B7280;font-weight:600">
+                                {{ ra.total }}
+                            </td>
+                            <td style="text-align:center;padding:11px 14px">
+                                {% if ra.booked > 0 %}
+                                <span style="display:inline-block;background:#FEE2E2;color:#991B1B;font-weight:700;padding:2px 10px;border-radius:12px;font-size:.78rem">{{ ra.booked }}</span>
+                                {% else %}
+                                <span style="color:#9CA3AF">0</span>
+                                {% endif %}
+                            </td>
+                            <td style="text-align:center;padding:11px 14px">
+                                {% if ra.free == 0 %}
+                                <span style="display:inline-flex;align-items:center;gap:4px;background:#991B1B;color:#fff;font-weight:700;padding:2px 10px;border-radius:12px;font-size:.78rem">
+                                    <i class="fas fa-times-circle" style="font-size:.7rem"></i>COMPLET
+                                </span>
+                                {% elif ra.free <= 2 %}
+                                <span style="display:inline-block;background:#FEF3C7;color:#92400E;font-weight:700;padding:2px 10px;border-radius:12px;font-size:.78rem">{{ ra.free }}</span>
+                                {% else %}
+                                <span style="display:inline-block;background:#D1FAE5;color:#065F46;font-weight:700;padding:2px 10px;border-radius:12px;font-size:.78rem">{{ ra.free }}</span>
+                                {% endif %}
+                            </td>
+                            <td style="text-align:center;padding:11px 14px">
+                                {% widthratio ra.booked ra.total 100 as pct %}
+                                <div style="display:flex;align-items:center;gap:6px;justify-content:center">
+                                    <div style="width:60px;height:6px;background:#E5E7EB;border-radius:3px;overflow:hidden">
+                                        <div style="height:100%;border-radius:3px;width:{% widthratio ra.booked ra.total 100 %}%;background:{% if ra.free == 0 %}#EF4444{% elif ra.free <= 2 %}#F59E0B{% else %}#10B981{% endif %}"></div>
+                                    </div>
+                                    <span style="font-size:.72rem;color:#6B7280;min-width:28px">{% widthratio ra.booked ra.total 100 %}%</span>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr style="background:#F3F4F6;border-top:2px solid #E5E7EB;font-weight:700">
+                            <td style="padding:12px 14px;color:#374151;font-size:.88rem">TOTAL</td>
+                            <td style="text-align:center;padding:12px 14px;color:#374151;font-size:.88rem">{{ avail_total_all }}</td>
+                            <td style="text-align:center;padding:12px 14px;color:#991B1B;font-size:.88rem">{{ avail_booked_all }}</td>
+                            <td style="text-align:center;padding:12px 14px;color:#065F46;font-size:.88rem">{{ avail_free_all }}</td>
+                            <td style="text-align:center;padding:12px 14px">
+                                <div style="display:flex;align-items:center;gap:6px;justify-content:center">
+                                    <div style="width:60px;height:6px;background:#E5E7EB;border-radius:3px;overflow:hidden">
+                                        <div style="height:100%;border-radius:3px;width:{% widthratio avail_booked_all avail_total_all 100 %}%;background:#6B7280"></div>
+                                    </div>
+                                    <span style="font-size:.72rem;color:#6B7280">{% widthratio avail_booked_all avail_total_all 100 %}%</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            <div style="margin-top:12px;font-size:.72rem;color:#9CA3AF;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+                <span><span style="display:inline-block;width:10px;height:10px;background:#D1FAE5;border-radius:2px;margin-right:4px"></span>Disponible</span>
+                <span><span style="display:inline-block;width:10px;height:10px;background:#FEF3C7;border-radius:2px;margin-right:4px"></span>≤ 2 restantes</span>
+                <span><span style="display:inline-block;width:10px;height:10px;background:#FEE2E2;border-radius:2px;margin-right:4px"></span>Complet</span>
+                <span style="margin-left:auto">Date : <strong style="color:#374151">{{ avail_date|date:"d/m/Y" }}</strong></span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const gold = '#C9A96E', goldLight = 'rgba(201,169,110,0.15)';
+
+// Line Chart — Monthly bookings
+new Chart(document.getElementById('bookingChart'), {
+    type: 'line',
+    data: {
+        labels: {{ monthly_labels|safe }},
+        datasets: [{
+            label: 'Réservations',
+            data: {{ monthly_data|safe }},
+            borderColor: gold,
+            backgroundColor: goldLight,
+            borderWidth: 2,
+            tension: 0.4,
+            fill: true,
+            pointBackgroundColor: gold,
+            pointRadius: 4,
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 11 } }, grid: { color: '#F3F4F6' } },
+            x: { ticks: { font: { size: 11 } }, grid: { display: false } }
+        }
+    }
+});
+
+// Doughnut Chart — Revenue by category
+new Chart(document.getElementById('catChart'), {
+    type: 'doughnut',
+    data: {
+        labels: {{ cat_labels|safe }},
+        datasets: [{
+            data: {{ cat_data|safe }},
+            backgroundColor: ['#C9A96E','#3B82F6','#10B981','#8B5CF6'],
+            borderWidth: 2,
+            borderColor: '#fff',
+        }]
+    },
+    options: {
+        responsive: true,
+        cutout: '65%',
+        plugins: {
+            legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 12 } }
+        }
+    }
+});
+</script>
+{% endblock %}

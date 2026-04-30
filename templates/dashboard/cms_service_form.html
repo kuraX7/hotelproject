@@ -1,0 +1,76 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}{{ action }} un service{% endblock %}
+{% block page_title %}{{ action }} un service{% endblock %}
+{% block topbar_actions %}<a href="{% url 'dashboard_services' %}" class="topbar-btn"><i class="fas fa-arrow-left"></i> Retour</a>{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-6">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-card">
+                <div class="form-section">
+                    <div class="form-section-title"><i class="fas fa-concierge-bell" style="color:#C9A96E"></i> Informations</div>
+                    <div class="row g-3">
+                        <div class="col-12"><label class="form-label">Nom du service *</label><input type="text" name="name" class="form-control" value="{{ svc.name|default:'' }}" required placeholder="Ex: Restaurant Gastronomique"></div>
+                        <div class="col-12"><label class="form-label">Description *</label><textarea name="description" class="form-control" rows="4" required placeholder="Décrivez ce service...">{{ svc.description|default:'' }}</textarea></div>
+                        <div class="col-md-8">
+                            <label class="form-label">Classe d'icône FontAwesome *</label>
+                            <div style="display:flex;gap:8px;align-items:center">
+                                <input type="text" name="icon_class" class="form-control" id="iconInput" value="{{ svc.icon_class|default:'fas fa-concierge-bell' }}" placeholder="fas fa-spa" oninput="previewIcon(this.value)">
+                                <div style="width:44px;height:38px;background:#F9FAFB;border:1px solid #E5E7EB;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                                    <i id="iconPreview" class="{{ svc.icon_class|default:'fas fa-concierge-bell' }}" style="color:#C9A96E;font-size:1rem"></i>
+                                </div>
+                            </div>
+                            <div class="form-text">Ex: fas fa-spa, fas fa-utensils, fas fa-swimming-pool</div>
+                        </div>
+                        <div class="col-md-4"><label class="form-label">Ordre d'affichage</label><input type="number" name="order" class="form-control" value="{{ svc.order|default:'0' }}" min="0"></div>
+                        <div class="col-12"><label class="form-label">URL image (optionnel)</label><input type="url" name="image_url" class="form-control" value="{{ svc.image_url|default:'' }}" placeholder="https://images.unsplash.com/..."></div>
+                        <div class="col-12"><label class="form-label">Upload image (optionnel)</label><input type="file" name="image_file" class="form-control" accept="image/*"></div>
+                        <div class="col-12">
+                            <div style="background:#F9FAFB;border:1px solid #E5E7EB;border-radius:10px;padding:14px;display:flex;align-items:center;justify-content:space-between">
+                                <div><div style="font-weight:500;font-size:.88rem">Afficher sur l'accueil</div><div style="font-size:.75rem;color:#9CA3AF">Visible dans la section Services</div></div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" name="is_featured" {% if not svc or svc.is_featured %}checked{% endif %}>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div style="display:flex;gap:12px">
+                    <button type="submit" class="btn-gold px-4 py-2"><i class="fas fa-save me-2"></i>{{ action }}</button>
+                    <a href="{% url 'dashboard_services' %}" class="topbar-btn">Annuler</a>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="col-lg-6">
+        <div class="data-card" style="position:sticky;top:80px">
+            <div class="data-card-header"><div class="data-card-title"><i class="fas fa-eye"></i> Aperçu carte service</div></div>
+            <div style="background:#1A1A1A;padding:30px;border-radius:0 0 12px 12px;text-align:center">
+                <div style="width:64px;height:64px;background:rgba(201,169,110,.1);border:1px solid rgba(201,169,110,.3);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+                    <i id="bigIconPreview" class="{{ svc.icon_class|default:'fas fa-concierge-bell' }}" style="font-size:1.4rem;color:#C9A96E"></i>
+                </div>
+                <h5 id="svcNamePreview" style="color:#fff;font-family:Georgia,serif;font-size:1.1rem;margin-bottom:8px">{{ svc.name|default:'Nom du service' }}</h5>
+                <p id="svcDescPreview" style="color:rgba(255,255,255,.5);font-size:.82rem;line-height:1.6">{{ svc.description|default:'Description du service...'|truncatechars:100 }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function previewIcon(cls) {
+    document.getElementById('iconPreview').className = cls;
+    document.getElementById('bigIconPreview').className = cls;
+}
+document.querySelector('[name="name"]').addEventListener('input', function() {
+    document.getElementById('svcNamePreview').textContent = this.value || 'Nom du service';
+});
+document.querySelector('[name="description"]').addEventListener('input', function() {
+    document.getElementById('svcDescPreview').textContent = (this.value || 'Description...').substring(0, 100);
+});
+</script>
+{% endblock %}

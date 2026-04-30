@@ -1,0 +1,289 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}Services{% endblock %}
+{% block page_title %}Gestion des Services{% endblock %}
+{% block page_subtitle %}{{ services|length }} service{{ services|length|pluralize }}{% endblock %}
+{% block topbar_actions %}
+<button class="topbar-btn primary" onclick="document.getElementById('addModal').style.display='flex'">
+  <i class="fas fa-plus"></i> Ajouter un service
+</button>
+{% endblock %}
+
+{% block content %}
+<style>
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center}
+.modal-box{background:#fff;border-radius:14px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.modal-head{padding:18px 22px;border-bottom:1px solid #F3F4F6;display:flex;align-items:center;justify-content:space-between}
+.modal-body{padding:20px 22px}
+.modal-foot{padding:14px 22px;border-top:1px solid #F3F4F6;display:flex;gap:10px;justify-content:flex-end}
+.close-btn{background:none;border:none;font-size:1.4rem;cursor:pointer;color:#9CA3AF;line-height:1}
+.close-btn:hover{color:#111}
+</style>
+
+<!-- Grid des services -->
+{% if services %}
+<div class="row g-4 mb-4">
+  {% for svc in services %}
+  <div class="col-xl-3 col-lg-4 col-md-6">
+    <div class="room-mgmt-card" style="height:100%">
+      {% if svc.get_image %}
+        <img src="{{ svc.get_image }}" class="room-mgmt-img" alt="{{ svc.name }}">
+      {% else %}
+        <div class="room-mgmt-img-placeholder">
+          <i class="{{ svc.icon_class }}" style="font-size:2.5rem;color:#C9A96E"></i>
+        </div>
+      {% endif %}
+
+      <div style="padding:10px 14px;background:#F9FAFB;border-bottom:1px solid #F3F4F6;display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:7px">
+          <div style="width:28px;height:28px;background:rgba(201,169,110,.12);border-radius:7px;display:flex;align-items:center;justify-content:center">
+            <i class="{{ svc.icon_class }}" style="color:#C9A96E;font-size:.8rem"></i>
+          </div>
+          <span style="font-size:.82rem;font-weight:600;color:#111">{{ svc.name|truncatechars:18 }}</span>
+        </div>
+        <label class="toggle-switch" title="Afficher sur l'accueil" style="flex-shrink:0">
+          <input type="checkbox" id="toggle-{{ svc.id }}"
+            {% if svc.is_featured %}checked{% endif %}
+            onchange="toggleFeatured({{ svc.id }}, this)">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div style="padding:12px 14px;flex:1">
+        <p style="font-size:.78rem;color:#6B7280;line-height:1.5;margin:0">{{ svc.description|truncatechars:90 }}</p>
+        <div style="font-size:.7rem;color:#9CA3AF;margin-top:6px">
+          Ordre : {{ svc.order }} &nbsp;·&nbsp;
+          <span id="feat-label-{{ svc.id }}" style="color:{% if svc.is_featured %}#10B981{% else %}#EF4444{% endif %}">
+            {% if svc.is_featured %}Visible{% else %}Masqué{% endif %}
+          </span>
+        </div>
+      </div>
+
+      <div class="room-mgmt-footer">
+        <button onclick="openEditModal({{ svc.id }},'{{ svc.name|escapejs }}','{{ svc.description|escapejs }}','{{ svc.icon_class|escapejs }}','{{ svc.image_url|escapejs }}',{{ svc.is_featured|yesno:'true,false' }},{{ svc.order }})"
+          class="btn-gold" style="flex:1;justify-content:center;padding:7px;font-size:.78rem">
+          <i class="fas fa-edit me-1"></i>Modifier
+        </button>
+        <form method="post" action="{% url 'dashboard_service_delete' svc.id %}"
+          onsubmit="return confirm('Supprimer « {{ svc.name }} » ?')">
+          {% csrf_token %}
+          <button type="submit" class="btn-icon danger" title="Supprimer"><i class="fas fa-trash"></i></button>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="data-card mb-4">
+  <div class="empty-state">
+    <i class="fas fa-concierge-bell"></i>
+    <h5 style="color:#374151;margin-bottom:8px">Aucun service configuré</h5>
+    <p style="font-size:.83rem">Cliquez sur <strong>+ Ajouter un service</strong> en haut à droite.</p>
+  </div>
+</div>
+{% endif %}
+
+<!-- Référence icônes -->
+<div class="data-card">
+  <div class="data-card-header">
+    <div class="data-card-title"><i class="fas fa-icons"></i> Icônes disponibles — cliquer pour copier</div>
+  </div>
+  <div style="padding:14px;display:flex;flex-wrap:wrap;gap:8px">
+    <button onclick="copyIcon('fas fa-spa')" class="icon-ref-btn"><i class="fas fa-spa"></i> fas fa-spa</button>
+    <button onclick="copyIcon('fas fa-utensils')" class="icon-ref-btn"><i class="fas fa-utensils"></i> fas fa-utensils</button>
+    <button onclick="copyIcon('fas fa-swimming-pool')" class="icon-ref-btn"><i class="fas fa-swimming-pool"></i> fas fa-swimming-pool</button>
+    <button onclick="copyIcon('fas fa-dumbbell')" class="icon-ref-btn"><i class="fas fa-dumbbell"></i> fas fa-dumbbell</button>
+    <button onclick="copyIcon('fas fa-concierge-bell')" class="icon-ref-btn"><i class="fas fa-concierge-bell"></i> fas fa-concierge-bell</button>
+    <button onclick="copyIcon('fas fa-briefcase')" class="icon-ref-btn"><i class="fas fa-briefcase"></i> fas fa-briefcase</button>
+    <button onclick="copyIcon('fas fa-shuttle-van')" class="icon-ref-btn"><i class="fas fa-shuttle-van"></i> fas fa-shuttle-van</button>
+    <button onclick="copyIcon('fas fa-parking')" class="icon-ref-btn"><i class="fas fa-parking"></i> fas fa-parking</button>
+    <button onclick="copyIcon('fas fa-cocktail')" class="icon-ref-btn"><i class="fas fa-cocktail"></i> fas fa-cocktail</button>
+    <button onclick="copyIcon('fas fa-car')" class="icon-ref-btn"><i class="fas fa-car"></i> fas fa-car</button>
+    <button onclick="copyIcon('fas fa-wifi')" class="icon-ref-btn"><i class="fas fa-wifi"></i> fas fa-wifi</button>
+    <button onclick="copyIcon('fas fa-leaf')" class="icon-ref-btn"><i class="fas fa-leaf"></i> fas fa-leaf</button>
+    <button onclick="copyIcon('fas fa-camera')" class="icon-ref-btn"><i class="fas fa-camera"></i> fas fa-camera</button>
+    <button onclick="copyIcon('fas fa-music')" class="icon-ref-btn"><i class="fas fa-music"></i> fas fa-music</button>
+    <button onclick="copyIcon('fas fa-baby')" class="icon-ref-btn"><i class="fas fa-baby"></i> fas fa-baby</button>
+    <button onclick="copyIcon('fas fa-fire')" class="icon-ref-btn"><i class="fas fa-fire"></i> fas fa-fire</button>
+  </div>
+  <div style="padding:0 14px 12px;font-size:.72rem;color:#9CA3AF">
+    <i class="fas fa-info-circle me-1"></i>Cliquez pour copier · Plus sur
+    <a href="https://fontawesome.com/icons" target="_blank" style="color:#C9A96E">fontawesome.com/icons</a>
+  </div>
+</div>
+
+<!-- ══ MODAL AJOUTER ══ -->
+<div class="modal-overlay" id="addModal" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h6 style="margin:0;font-weight:600"><i class="fas fa-plus-circle me-2" style="color:#C9A96E"></i>Ajouter un service</h6>
+      <button class="close-btn" onclick="document.getElementById('addModal').style.display='none'">×</button>
+    </div>
+    <form method="post" action="{% url 'dashboard_service_add' %}" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label">Nom du service <span style="color:#EF4444">*</span></label>
+            <input type="text" name="name" class="form-control" required placeholder="Ex: Restaurant Gastronomique">
+          </div>
+          <div class="col-12">
+            <label class="form-label">Description <span style="color:#EF4444">*</span></label>
+            <textarea name="description" class="form-control" rows="3" required placeholder="Décrivez ce service en quelques mots..."></textarea>
+          </div>
+          <div class="col-md-8">
+            <label class="form-label">Icône FontAwesome</label>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input type="text" name="icon_class" id="add_icon_input" class="form-control"
+                value="fas fa-concierge-bell" placeholder="fas fa-spa"
+                oninput="document.getElementById('add_icon_prev').className=this.value">
+              <div style="width:42px;height:38px;background:#F9FAFB;border:1px solid #E5E7EB;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                <i id="add_icon_prev" class="fas fa-concierge-bell" style="color:#C9A96E"></i>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Ordre d'affichage</label>
+            <input type="number" name="order" class="form-control" value="0" min="0">
+          </div>
+          <div class="col-12">
+            <label class="form-label">URL image (optionnel)</label>
+            <input type="url" name="image_url" class="form-control" placeholder="https://images.unsplash.com/...">
+          </div>
+          <div class="col-12">
+            <label class="form-label">Upload image (optionnel)</label>
+            <input type="file" name="image_file" class="form-control" accept="image/*">
+          </div>
+          <div class="col-12">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.85rem;padding:10px;background:#F9FAFB;border-radius:8px;border:1px solid #E5E7EB">
+              <input type="checkbox" name="is_featured" checked style="width:16px;height:16px;accent-color:#C9A96E">
+              Afficher sur la page d'accueil
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="topbar-btn" onclick="document.getElementById('addModal').style.display='none'">Annuler</button>
+        <button type="submit" class="btn-gold"><i class="fas fa-save me-2"></i>Créer le service</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ══ MODAL MODIFIER ══ -->
+<div class="modal-overlay" id="editModal" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h6 style="margin:0;font-weight:600"><i class="fas fa-edit me-2" style="color:#C9A96E"></i>Modifier le service</h6>
+      <button class="close-btn" onclick="document.getElementById('editModal').style.display='none'">×</button>
+    </div>
+    <form method="post" id="editServiceForm" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label">Nom <span style="color:#EF4444">*</span></label>
+            <input type="text" name="name" id="edit_name" class="form-control" required>
+          </div>
+          <div class="col-12">
+            <label class="form-label">Description</label>
+            <textarea name="description" id="edit_desc" class="form-control" rows="3"></textarea>
+          </div>
+          <div class="col-md-8">
+            <label class="form-label">Icône FontAwesome</label>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input type="text" name="icon_class" id="edit_icon" class="form-control"
+                oninput="document.getElementById('edit_icon_prev').className=this.value">
+              <div style="width:42px;height:38px;background:#F9FAFB;border:1px solid #E5E7EB;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                <i id="edit_icon_prev" class="fas fa-concierge-bell" style="color:#C9A96E"></i>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Ordre</label>
+            <input type="number" name="order" id="edit_order" class="form-control" min="0">
+          </div>
+          <div class="col-12">
+            <label class="form-label">URL image</label>
+            <input type="url" name="image_url" id="edit_img_url" class="form-control" placeholder="https://...">
+          </div>
+          <div class="col-12">
+            <label class="form-label">Nouveau fichier image (optionnel)</label>
+            <input type="file" name="image_file" class="form-control" accept="image/*">
+          </div>
+          <div class="col-12">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.85rem;padding:10px;background:#F9FAFB;border-radius:8px;border:1px solid #E5E7EB">
+              <input type="checkbox" name="is_featured" id="edit_featured" style="width:16px;height:16px;accent-color:#C9A96E">
+              Afficher sur la page d'accueil
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="topbar-btn" onclick="document.getElementById('editModal').style.display='none'">Annuler</button>
+        <button type="submit" class="btn-gold"><i class="fas fa-save me-2"></i>Enregistrer</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Style des boutons icônes de référence
+document.querySelectorAll('.icon-ref-btn').forEach(btn => {
+  btn.style.cssText = 'background:#F9FAFB;border:1px solid #E5E7EB;border-radius:8px;padding:7px 12px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;font-size:.75rem;color:#374151;transition:all .2s;font-family:inherit';
+  btn.querySelector('i').style.color = '#C9A96E';
+  btn.onmouseover = () => btn.style.borderColor = '#C9A96E';
+  btn.onmouseout  = () => btn.style.borderColor = '#E5E7EB';
+});
+
+function openEditModal(id, name, desc, icon, imgUrl, featured, order) {
+  document.getElementById('editServiceForm').action = '/dashboard/contenu/services/' + id + '/modifier/';
+  document.getElementById('edit_name').value     = name;
+  document.getElementById('edit_desc').value     = desc;
+  document.getElementById('edit_icon').value     = icon;
+  document.getElementById('edit_icon_prev').className = icon;
+  document.getElementById('edit_img_url').value  = imgUrl;
+  document.getElementById('edit_featured').checked = featured;
+  document.getElementById('edit_order').value    = order;
+  document.getElementById('editModal').style.display = 'flex';
+}
+
+function toggleFeatured(id, cb) {
+  fetch('/dashboard/contenu/services/' + id + '/toggle/', {
+    method: 'POST',
+    headers: {'X-CSRFToken': '{{ csrf_token }}'}
+  })
+  .then(r => r.json())
+  .then(data => {
+    const lbl = document.getElementById('feat-label-' + id);
+    if (lbl) {
+      lbl.textContent = data.is_featured ? 'Visible' : 'Masqué';
+      lbl.style.color = data.is_featured ? '#10B981' : '#EF4444';
+    }
+  })
+  .catch(() => { cb.checked = !cb.checked; });
+}
+
+function copyIcon(cls) {
+  navigator.clipboard.writeText(cls).then(() => {
+    // Auto-fill the open modal's icon input if one is open
+    ['add_icon_input','edit_icon'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.value = cls;
+        const prev = document.getElementById(id === 'add_icon_input' ? 'add_icon_prev' : 'edit_icon_prev');
+        if (prev) prev.className = cls;
+      }
+    });
+    // Toast notification
+    const toast = document.createElement('div');
+    toast.textContent = '✅ Copié : ' + cls;
+    toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#111;color:#fff;padding:10px 18px;border-radius:8px;font-size:.82rem;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.3)';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2200);
+  });
+}
+</script>
+{% endblock %}

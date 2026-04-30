@@ -1,0 +1,240 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}Réservations{% endblock %}
+{% block page_title %}Réservations{% endblock %}
+{% block page_subtitle %}{{ total_count }} résultat{{ total_count|pluralize }}{% endblock %}
+{% block topbar_actions %}{% endblock %}
+
+{% block content %}
+<!-- Stats rapides -->
+<div class="row g-3 mb-4">
+    {% for v, l in status_choices %}
+    <div class="col-6 col-md-3">
+        <a href="?status={{ v }}" style="text-decoration:none">
+            <div class="stat-card" style="{% if status_filter == v %}border-color:#C9A96E;{% endif %}padding:14px 16px">
+                <div class="stat-icon {% if v == 'confirmed' %}green{% elif v == 'pending' %}orange{% elif v == 'cancelled' %}red{% else %}purple{% endif %}">
+                    <i class="fas fa-{% if v == 'confirmed' %}check{% elif v == 'pending' %}clock{% elif v == 'cancelled' %}times{% else %}flag{% endif %}"></i>
+                </div>
+                <div>
+                    <div class="stat-value" style="font-size:1.3rem">
+                        {% with bookings.paginator.object_list as all_b %}0{% endwith %}
+                    </div>
+                    <div class="stat-label">{{ l }}</div>
+                </div>
+            </div>
+        </a>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Filters -->
+<div class="data-card mb-4">
+    <div style="padding:14px 18px">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-lg-4 col-md-5">
+                <div class="search-bar">
+                    <i class="fas fa-search"></i>
+                    <input type="text" name="q" class="form-control" placeholder="Nom, email, téléphone, chambre..." value="{{ search }}">
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-3">
+                <select name="status" class="form-select" style="font-size:.83rem;border-radius:8px" onchange="this.form.submit()">
+                    <option value="">Tous les statuts</option>
+                    {% for v, l in status_choices %}
+                    <option value="{{ v }}" {% if status_filter == v %}selected{% endif %}>{{ l }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-lg-2 col-md-4">
+                <input type="date" name="date_from" class="form-control" value="{{ date_from }}" title="Arrivée depuis">
+            </div>
+            <div class="col-lg-2 col-md-4">
+                <input type="date" name="date_to" class="form-control" value="{{ date_to }}" title="Départ jusqu'au">
+            </div>
+            <div class="col-lg-1 col-md-4">
+                <button type="submit" class="topbar-btn w-100 justify-content-center primary">
+                    <i class="fas fa-filter"></i>
+                </button>
+            </div>
+            {% if status_filter or search or date_from or date_to %}
+            <div class="col-lg-1 col-md-4">
+                <a href="{% url 'dashboard_bookings' %}" class="topbar-btn w-100 justify-content-center" style="color:#EF4444">
+                    <i class="fas fa-times"></i>
+                </a>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<!-- Table -->
+<div class="data-card">
+    <div class="data-card-header">
+        <div class="data-card-title">
+            <i class="fas fa-calendar-alt"></i> Liste des réservations
+            {% if status_filter %}<span class="section-tag-pill ms-2">{{ status_filter }}</span>{% endif %}
+        </div>
+        <span style="font-size:.78rem;color:#9CA3AF">{{ total_count }} réservation{{ total_count|pluralize }}</span>
+    </div>
+
+    {% if bookings %}
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Réf.</th>
+                    <th>Client</th>
+                    <th>Chambre</th>
+                    <th>Arrivée</th>
+                    <th>Départ</th>
+                    <th style="text-align:center">Nuits</th>
+                    <th style="text-align:center">Pers.</th>
+                    <th>Montant</th>
+                    <th>Statut</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for b in bookings %}
+            <tr>
+                <td>
+                    <code style="color:#6B7280;font-size:.72rem">#{{ b.id|stringformat:"04d" }}</code>
+                    <div style="font-size:.68rem;color:#C0C0C0">{{ b.created_at|date:"d/m/Y" }}</div>
+                </td>
+                <td>
+                    <div style="font-weight:500;color:#111;font-size:.83rem">{{ b.name }}</div>
+                    <div style="color:#9CA3AF;font-size:.7rem">{{ b.email }}</div>
+                    {% if b.phone %}<div style="color:#9CA3AF;font-size:.68rem"><i class="fas fa-phone" style="font-size:.6rem"></i> {{ b.phone }}</div>{% endif %}
+                </td>
+                <td>
+                    <div style="font-size:.82rem;font-weight:500;color:#374151">{{ b.room.name|truncatechars:22 }}</div>
+                    <span class="section-tag-pill" style="font-size:.62rem">{{ b.room.get_category_display }}</span>
+                </td>
+                <td style="font-size:.82rem;white-space:nowrap;font-weight:500">{{ b.check_in|date:"d/m/Y" }}</td>
+                <td style="font-size:.82rem;white-space:nowrap;color:#6B7280">{{ b.check_out|date:"d/m/Y" }}</td>
+                <td style="text-align:center;font-size:.82rem">{{ b.nights }}n</td>
+                <td style="text-align:center;font-size:.82rem">{{ b.guests }}</td>
+                <td style="font-weight:700;color:#C9A96E;font-size:.85rem;white-space:nowrap">
+                    {{ b.total_price|floatformat:0 }} MAD
+                </td>
+                <td>
+                    <form method="post" action="{% url 'dashboard_booking_status' b.id %}">
+                        {% csrf_token %}
+                        <select name="status" class="form-select form-select-sm status-select" style="font-size:.72rem;min-width:120px;border-radius:20px" onchange="this.form.submit()">
+                            {% for v, l in b.STATUS_CHOICES %}
+                            <option value="{{ v }}" {% if b.status == v %}selected{% endif %}>{{ l }}</option>
+                            {% endfor %}
+                        </select>
+                    </form>
+                </td>
+                <td>
+                    <div style="display:flex;gap:5px">
+                        <button class="btn-icon" onclick="toggleDetail({{ b.id }})" title="Détails"><i class="fas fa-eye"></i></button>
+                        <button class="btn-icon" onclick="showNotesModal({{ b.id }},'{{ b.admin_notes|escapejs }}')" title="Notes admin"><i class="fas fa-sticky-note {% if b.admin_notes %}" style="color:#F59E0B{% endif %}"></i></button>
+                        <form method="post" action="{% url 'dashboard_booking_delete' b.id %}" onsubmit="return confirm('Supprimer définitivement cette réservation ?')">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-icon danger" title="Supprimer"><i class="fas fa-trash"></i></button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            <!-- Detail accordion row -->
+            <tr id="detail-{{ b.id }}" style="display:none;background:#FAFBFD">
+                <td colspan="10">
+                    <div style="padding:12px 16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;font-size:.82rem">
+                        <div><span style="color:#9CA3AF;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em">Référence</span><div style="font-weight:600;color:#111">#AL{{ b.id|stringformat:"05d" }}</div></div>
+                        <div><span style="color:#9CA3AF;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em">Prix par nuit</span><div style="font-weight:600;color:#C9A96E">{{ b.room.price|floatformat:0 }} MAD</div></div>
+                        <div><span style="color:#9CA3AF;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em">Créée le</span><div>{{ b.created_at|date:"d/m/Y à H:i" }}</div></div>
+                        <div><span style="color:#9CA3AF;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em">Mise à jour</span><div>{{ b.updated_at|date:"d/m/Y à H:i" }}</div></div>
+                        {% if b.special_requests %}
+                        <div style="grid-column:span 2"><span style="color:#9CA3AF;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em">Demandes spéciales</span><div style="color:#374151">{{ b.special_requests }}</div></div>
+                        {% endif %}
+                        {% if b.admin_notes %}
+                        <div style="grid-column:span 2"><span style="color:#F59E0B;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em">📝 Notes admin</span><div style="color:#374151">{{ b.admin_notes }}</div></div>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if bookings.has_other_pages %}
+    <div style="padding:14px 18px;display:flex;align-items:center;justify-content:between;border-top:1px solid #F3F4F6;gap:8px;flex-wrap:wrap">
+        <span style="font-size:.78rem;color:#6B7280;flex:1">
+            Page {{ bookings.number }} / {{ bookings.paginator.num_pages }} — {{ total_count }} résultat{{ total_count|pluralize }}
+        </span>
+        <div style="display:flex;gap:4px">
+            {% if bookings.has_previous %}
+            <a href="?page={{ bookings.previous_page_number }}&status={{ status_filter }}&q={{ search }}&date_from={{ date_from }}&date_to={{ date_to }}" class="btn-icon"><i class="fas fa-chevron-left"></i></a>
+            {% endif %}
+            {% for num in bookings.paginator.page_range %}
+                {% if bookings.number == num %}
+                <span style="width:30px;height:30px;background:linear-gradient(135deg,#C9A96E,#A8854A);color:#fff;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:600">{{ num }}</span>
+                {% elif num > bookings.number|add:"-3" and num < bookings.number|add:"3" %}
+                <a href="?page={{ num }}&status={{ status_filter }}&q={{ search }}&date_from={{ date_from }}&date_to={{ date_to }}" class="btn-icon">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+            {% if bookings.has_next %}
+            <a href="?page={{ bookings.next_page_number }}&status={{ status_filter }}&q={{ search }}&date_from={{ date_from }}&date_to={{ date_to }}" class="btn-icon"><i class="fas fa-chevron-right"></i></a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-calendar-times"></i>
+        <h6 style="color:#374151;margin-bottom:6px">Aucune réservation trouvée</h6>
+        <p style="font-size:.83rem">{% if search or status_filter or date_from %}Modifiez vos filtres.{% else %}Les réservations apparaîtront ici.{% endif %}</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Notes Modal -->
+<div class="modal fade" id="notesModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius:14px;border:none">
+            <div class="modal-header" style="border-bottom:1px solid #F3F4F6;padding:16px 20px">
+                <h6 style="margin:0;font-weight:600"><i class="fas fa-sticky-note me-2" style="color:#F59E0B"></i>Notes internes</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" id="notesForm">
+                {% csrf_token %}
+                <div class="modal-body" style="padding:20px">
+                    <p style="font-size:.82rem;color:#6B7280;margin-bottom:10px">Ces notes sont visibles uniquement par l'équipe admin.</p>
+                    <textarea name="admin_notes" id="notesTextarea" class="form-control" rows="4" placeholder="Ex: Client VIP, chambre haute-priorité, allergie..."></textarea>
+                </div>
+                <div class="modal-footer" style="border-top:1px solid #F3F4F6;padding:14px 20px;gap:10px">
+                    <button type="button" class="topbar-btn" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn-gold"><i class="fas fa-save me-2"></i>Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleDetail(id) {
+    const row = document.getElementById('detail-' + id);
+    row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
+}
+function showNotesModal(id, notes) {
+    document.getElementById('notesForm').action = '/dashboard/reservations/' + id + '/notes/';
+    document.getElementById('notesTextarea').value = notes;
+    new bootstrap.Modal(document.getElementById('notesModal')).show();
+}
+// Color status selects
+document.querySelectorAll('.status-select').forEach(sel => {
+    sel.addEventListener('change', function() {
+        const colors = {confirmed:'#D1FAE5',pending:'#FEF3C7',cancelled:'#FEE2E2',completed:'#EDE9FE'};
+        this.style.background = colors[this.value] || '#fff';
+    });
+    const colors = {confirmed:'#D1FAE5',pending:'#FEF3C7',cancelled:'#FEE2E2',completed:'#EDE9FE'};
+    sel.style.background = colors[sel.value] || '#fff';
+});
+</script>
+{% endblock %}

@@ -1,0 +1,684 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{% if info %}{{ info.hotel_name }}{% else %}Hôtel Al Andalus{% endif %} ★★★★★ — Luxe & Prestige à Casablanca{% endblock %}
+
+{% block content %}
+
+<!-- HERO SECTION (100% dynamique) -->
+<section class="hero-section">
+    <div class="hero-bg">
+        <div class="hero-overlay"></div>
+        <div class="hero-pattern"></div>
+        {% if hero and hero.get_bg_image %}
+        <style>.hero-bg::before { background-image: url('{{ hero.get_bg_image }}') !important; }</style>
+        {% endif %}
+    </div>
+    <div class="container hero-content">
+        <div class="row justify-content-center">
+            <div class="col-lg-9 text-center">
+                <div class="hero-badge">
+                    <span>{% if hero %}{{ hero.badge_text }}{% else %}★★★★★ · Casablanca · Depuis 1985{% endif %}</span>
+                </div>
+                <h1 class="hero-title">
+                    <span class="title-line-1">{% if hero %}{{ hero.title_line1 }}{% else %}L'Art de{% endif %}</span>
+                    <span class="title-line-2">{% if hero %}{{ hero.title_line2 }}{% else %}l'Hospitalité{% endif %}</span>
+                    <span class="title-line-3">{% if hero %}{{ hero.title_line3 }}{% else %}Marocaine{% endif %}</span>
+                </h1>
+                <p class="hero-subtitle">
+                    {% if hero %}{{ hero.subtitle }}{% else %}Découvrez une oasis de raffinement au cœur de Casablanca.{% endif %}
+                </p>
+                <div class="hero-actions">
+                    <a href="{% url 'room_list' %}" class="btn btn-gold btn-lg px-5">
+                        <i class="fas fa-bed me-2"></i>{% if hero %}{{ hero.btn_primary_text }}{% else %}Découvrir nos Suites{% endif %}
+                    </a>
+                    <a href="#quick-booking" class="btn btn-outline-light btn-lg px-4 ms-3">
+                        <i class="fas fa-calendar-alt me-2"></i>{% if hero %}{{ hero.btn_secondary_text }}{% else %}Réserver{% endif %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="scroll-indicator"><div class="scroll-dot"></div></div>
+</section>
+
+<!-- QUICK BOOKING BAR -->
+<section class="quick-booking-bar" id="quick-booking">
+    <div class="container">
+        <div class="booking-bar-card">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="booking-label"><i class="fas fa-calendar-check me-1"></i>Arrivée</label>
+                    <input type="date" class="form-control booking-input" id="qb-checkin">
+                </div>
+                <div class="col-md-3">
+                    <label class="booking-label"><i class="fas fa-calendar-times me-1"></i>Départ</label>
+                    <input type="date" class="form-control booking-input" id="qb-checkout">
+                </div>
+                <div class="col-md-2">
+                    <label class="booking-label"><i class="fas fa-users me-1"></i>Personnes</label>
+                    <select class="form-select booking-input" id="qb-guests">
+                        <option value="1">1 Personne</option>
+                        <option value="2" selected>2 Personnes</option>
+                        <option value="3">3 Personnes</option>
+                        <option value="4">4 Personnes</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="booking-label"><i class="fas fa-door-open me-1"></i>Catégorie</label>
+                    <select class="form-select booking-input" id="qb-category">
+                        <option value="">Toutes</option>
+                        <option value="jardin">Vue sur jardin</option>
+                        <option value="piscine">Vue sur piscine</option>
+                        <option value="familiale">Familiale</option>
+                        <option value="suite">Suite</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-gold w-100 py-2" onclick="quickSearch()">
+                        <i class="fas fa-search me-2"></i>Rechercher
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- STATS -->
+<section class="stats-section py-5">
+    <div class="container">
+        <div class="row g-4 text-center">
+            <div class="col-6 col-md-3">
+                <div class="stat-card">
+                    <div class="stat-number" data-target="{% if info %}{{ info.total_rooms }}{% else %}38{% endif %}">0</div>
+                    <div class="stat-label">Suites & Chambres</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card">
+                    <div class="stat-number" data-target="{% if info %}{{ info.stars }}{% else %}5{% endif %}">0</div>
+                    <div class="stat-label">Étoiles</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card">
+                    <div class="stat-number" data-target="{% if info %}{{ info.satisfaction_rate }}{% else %}98{% endif %}">0</div>
+                    <div class="stat-label">% Satisfaction</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card">
+                    <div class="stat-number" data-target="{{ years_excellence|default:40 }}">0</div>
+                    <div class="stat-label">Ans d'Excellence</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ABOUT -->
+<section class="about-section py-5">
+    <div class="container">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-6">
+                <div class="about-image-grid">
+                    <div class="about-img-main">
+                        <img src="{% if info %}{{ info.get_about_image }}{% else %}https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&q=80{% endif %}" alt="{% if info %}{{ info.hotel_name }}{% endif %}" class="img-fluid rounded-luxury">
+                    </div>
+                    <div class="about-img-accent">
+                        <img src="{% if info %}{{ info.get_about_accent_image }}{% else %}https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=300&q=80{% endif %}" alt="Vue hôtel" class="img-fluid rounded-luxury">
+                    </div>
+                    <div class="about-badge-floating">
+                        <span>Depuis</span>
+                        <strong>{% if info %}{{ info.founded_year }}{% else %}1985{% endif %}</strong>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="section-tag">Notre Histoire</div>
+                <h2 class="section-title-lg">{% if info %}{{ info.about_title }}{% else %}Un Héritage d'Excellence au Cœur du Maroc{% endif %}</h2>
+                <div class="divider-gold mb-4"></div>
+                <p class="section-text">{% if info %}{{ info.about_text1 }}{% endif %}</p>
+                {% if info and info.about_text2 %}<p class="section-text">{{ info.about_text2 }}</p>{% endif %}
+                <div class="row g-3 mt-3">
+                    <div class="col-6"><div class="feature-mini"><i class="{% if info %}{{ info.feature_1_icon }}{% else %}fas fa-leaf{% endif %} text-gold"></i><span>{% if info %}{{ info.feature_1_text }}{% else %}Cuisine marocaine authentique{% endif %}</span></div></div>
+                    <div class="col-6"><div class="feature-mini"><i class="{% if info %}{{ info.feature_2_icon }}{% else %}fas fa-spa{% endif %} text-gold"></i><span>{% if info %}{{ info.feature_2_text }}{% else %}Spa & Hammam traditionnel{% endif %}</span></div></div>
+                    <div class="col-6"><div class="feature-mini"><i class="{% if info %}{{ info.feature_3_icon }}{% else %}fas fa-swimming-pool{% endif %} text-gold"></i><span>{% if info %}{{ info.feature_3_text }}{% else %}Piscine Olympic & Terrasse{% endif %}</span></div></div>
+                    <div class="col-6"><div class="feature-mini"><i class="{% if info %}{{ info.feature_4_icon }}{% else %}fas fa-concierge-bell{% endif %} text-gold"></i><span>{% if info %}{{ info.feature_4_text }}{% else %}Conciergerie 24h/24{% endif %}</span></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FEATURED ROOMS -->
+<section class="featured-rooms-section py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <div class="section-tag">Hébergement</div>
+            <h2 class="section-title-lg">Nos Chambres & Suites</h2>
+            <div class="divider-gold mx-auto mb-3"></div>
+            <p class="section-subtitle">Du Standard Supérieur à la Suite Royale, chaque espace est une promesse de confort absolu.</p>
+        </div>
+        {% if featured_rooms %}
+        <div class="row g-4">
+            {% for room in featured_rooms %}
+            <div class="col-lg-4 col-md-6">
+                <div class="room-card-premium">
+                    <div class="room-card-image">
+                        {% if room.get_primary_image %}<img src="{{ room.get_primary_image }}" alt="{{ room.name }}" loading="lazy">
+                        {% else %}<img src="https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&q=80" alt="{{ room.name }}" loading="lazy">{% endif %}
+                        <div class="room-card-overlay"><a href="{{ room.get_absolute_url }}" class="btn btn-light btn-sm">Voir les détails</a></div>
+                        <div class="room-category-badge">{{ room.get_category_display }}</div>
+                    </div>
+                    <div class="room-card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <h5 class="room-card-title">{{ room.name }}</h5>
+                            <div class="room-card-price">
+                                <span class="price-amount">{{ room.price|floatformat:0 }}</span>
+                                <span class="price-currency"> MAD/nuit</span>
+                            </div>
+                        </div>
+                        <p class="room-card-desc">{{ room.description|truncatechars:100 }}</p>
+                        <div class="room-amenities">
+                            <span class="amenity-tag"><i class="fas fa-users"></i> {{ room.capacity }}</span>
+                            <span class="amenity-tag"><i class="fas fa-expand-arrows-alt"></i> {{ room.size }}m²</span>
+                            {% if room.has_wifi %}<span class="amenity-tag"><i class="fas fa-wifi"></i></span>{% endif %}
+                            {% if room.has_ac %}<span class="amenity-tag"><i class="fas fa-snowflake"></i></span>{% endif %}
+                            {% if room.has_sea_view %}<span class="amenity-tag"><i class="fas fa-water"></i> Vue mer</span>{% endif %}
+                        </div>
+                        <div class="d-flex gap-2 mt-3">
+                            <a href="{{ room.get_absolute_url }}" class="btn btn-outline-dark flex-grow-1 btn-sm">Détails</a>
+                            <a href="{% url 'book_room' room.id %}" class="btn btn-gold flex-grow-1 btn-sm">Réserver</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="text-center mt-5">
+            <a href="{% url 'room_list' %}" class="btn btn-outline-dark btn-lg px-5">Voir toutes nos chambres <i class="fas fa-arrow-right ms-2"></i></a>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- SERVICES (dynamique) -->
+<section class="amenities-section py-5" id="amenities">
+    <div class="container">
+        <div class="text-center mb-5">
+            <div class="section-tag">Bien-être</div>
+            <h2 class="section-title-lg" style="color:#fff">Services & Équipements</h2>
+            <div class="divider-gold mx-auto"></div>
+        </div>
+        <div class="row g-4">
+            {% for service in services %}
+            <div class="col-lg-4 col-md-6">
+                {% with img=service.get_image %}
+                <a href="{% url 'service_detail' service.slug %}" class="amenity-card-link" title="{{ service.name }}">
+                <div class="amenity-card text-center{% if img %} amenity-card-img{% endif %}"
+                     {% if img %}style="background-image:url('{{ img }}');"{% endif %}>
+                    {% if img %}<div class="amenity-card-overlay"></div>{% endif %}
+                    <div class="amenity-card-body">
+                        <div class="amenity-icon-wrap"><i class="{{ service.icon_class }}"></i></div>
+                        <h5>{{ service.name }}</h5>
+                        <p>{{ service.description }}</p>
+                        <span class="amenity-card-cta">Découvrir <i class="fas fa-arrow-right ms-1"></i></span>
+                    </div>
+                </div>
+                </a>
+                {% endwith %}
+            </div>
+            {% empty %}
+            <div class="col-12 text-center"><p style="color:rgba(255,255,255,0.4)">Aucun service configuré.</p></div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+
+<!-- PROMOTIONS (dynamique) -->
+{% if promotions %}
+<section class="promotions-section py-5" id="promotions">
+    <div class="container">
+        <div class="text-center mb-5">
+            <div class="section-tag">Offres Spéciales</div>
+            <h2 class="section-title-lg">Promotions & Avantages Exclusifs</h2>
+            <div class="divider-gold mx-auto mb-3"></div>
+            <p class="section-subtitle">Profitez de nos offres limitées, réservables uniquement en direct sur notre site.</p>
+        </div>
+        <div class="row g-4 justify-content-center">
+            {% for promo in promotions %}
+            {% with bc=promo.get_badge_display_color %}
+            <div class="col-lg-4 col-md-6">
+                <div class="promo-front-card">
+                    <div class="promo-front-img-wrap">
+                        {% if promo.get_image %}
+                        <img src="{{ promo.get_image }}" alt="{{ promo.title }}" loading="lazy">
+                        {% else %}
+                        <div style="background:linear-gradient(135deg,#1a1008,#2d1f0a);height:100%;display:flex;align-items:center;justify-content:center">
+                            <i class="fas fa-tag" style="font-size:3rem;color:#C9A96E;opacity:.5"></i>
+                        </div>
+                        {% endif %}
+                        <div class="promo-front-overlay"></div>
+                        <span class="promo-front-badge" style="background:{{ bc.0 }};color:{{ bc.1 }}">
+                            {{ promo.get_badge_display }}
+                        </span>
+                        {% if promo.discount_label or promo.discount_pct %}
+                        <div class="promo-front-discount">
+                            {{ promo.discount_label|default:promo.discount_pct|stringformat:"s"|add:"%" }}
+                        </div>
+                        {% endif %}
+                        {% if promo.days_remaining is not None %}
+                        <div class="promo-countdown {% if promo.days_remaining <= 2 %}urgent{% endif %}">
+                            <i class="fas fa-clock me-1"></i>
+                            {% if promo.days_remaining == 0 %}Expire aujourd'hui !
+                            {% else %}{{ promo.days_remaining }} jour{{ promo.days_remaining|pluralize }} restant{{ promo.days_remaining|pluralize }}
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="promo-front-body">
+                        <h5 class="promo-front-title">{{ promo.title }}</h5>
+                        {% if promo.subtitle %}<p class="promo-front-sub">{{ promo.subtitle }}</p>{% endif %}
+                        <p class="promo-front-desc">{{ promo.description|truncatechars:110 }}</p>
+                        {% if promo.room %}
+                        <div class="promo-room-tag">
+                            <i class="fas fa-bed me-1"></i>{{ promo.room.name }}
+                        </div>
+                        {% endif %}
+                        <div class="d-flex gap-2 mt-3">
+                            {% if promo.room %}
+                            <a href="{% url 'book_room' promo.room.id %}" class="btn btn-gold flex-grow-1 btn-sm">
+                                <i class="fas fa-calendar-check me-1"></i>{{ promo.cta_text }}
+                            </a>
+                            {% else %}
+                            <a href="{% url 'room_list' %}" class="btn btn-gold flex-grow-1 btn-sm">
+                                <i class="fas fa-search me-1"></i>{{ promo.cta_text }}
+                            </a>
+                            {% endif %}
+                            <a href="{% url 'promotions_page' %}" class="btn btn-outline-dark btn-sm px-3">Tout voir</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endwith %}
+            {% endfor %}
+        </div>
+        <div class="text-center mt-4">
+            <a href="{% url 'promotions_page' %}" class="btn btn-outline-dark btn-lg px-5">
+                Toutes nos promotions <i class="fas fa-arrow-right ms-2"></i>
+            </a>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- TESTIMONIALS (dynamique) -->
+<section class="testimonials-section py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <div class="section-tag">Avis Clients</div>
+            <h2 class="section-title-lg">Ce que disent nos Hôtes</h2>
+            <div class="divider-gold mx-auto"></div>
+        </div>
+        <div class="row g-4">
+            {% for t in testimonials %}
+            <div class="col-md-4">
+                <div class="testimonial-card {% if forloop.counter == 2 %}featured-testimonial{% endif %}">
+                    <div class="stars mb-3">{{ t.stars_display }}</div>
+                    <p class="testimonial-text">"{{ t.text }}"</p>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">{{ t.initials }}</div>
+                        <div>
+                            <strong>{{ t.name }}</strong>
+                            <span>{{ t.origin }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+
+<!-- FAQ (dynamique) -->
+{% with featured_faqs=faqs %}
+{% if featured_faqs %}
+<section class="faq-home-section py-5" style="background:#F8F6F2">
+    <div class="container">
+        <div class="row align-items-center mb-4">
+            <div class="col-lg-6">
+                <div class="section-tag">Questions fréquentes</div>
+                <h2 class="section-title-lg">Tout ce que vous souhaitez savoir</h2>
+                <div class="divider-gold mb-0"></div>
+            </div>
+            <div class="col-lg-6 text-lg-end mt-3 mt-lg-0">
+                <a href="{% url 'faq_page' %}" class="btn btn-outline-dark px-4">
+                    Voir toutes les questions <i class="fas fa-arrow-right ms-2"></i>
+                </a>
+            </div>
+        </div>
+        <div class="row g-3">
+            <div class="col-lg-6">
+                {% for faq in featured_faqs %}{% if forloop.counter|divisibleby:2 == False %}
+                <div class="faq-item" style="margin-bottom:10px">
+                    <button class="faq-question" onclick="toggleFaq(this)">
+                        <span class="faq-q-text">{{ faq.question }}</span>
+                        <i class="fas fa-chevron-down faq-icon"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>{{ faq.answer|linebreaksbr }}</p>
+                        {% with items=faq.get_answer_items_list %}{% if items %}<ul>{% for item in items %}<li>{{ item }}</li>{% endfor %}</ul>{% endif %}{% endwith %}
+                    </div>
+                </div>
+                {% endif %}{% endfor %}
+            </div>
+            <div class="col-lg-6">
+                {% for faq in featured_faqs %}{% if forloop.counter|divisibleby:2 %}
+                <div class="faq-item" style="margin-bottom:10px">
+                    <button class="faq-question" onclick="toggleFaq(this)">
+                        <span class="faq-q-text">{{ faq.question }}</span>
+                        <i class="fas fa-chevron-down faq-icon"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>{{ faq.answer|linebreaksbr }}</p>
+                        {% with items=faq.get_answer_items_list %}{% if items %}<ul>{% for item in items %}<li>{{ item }}</li>{% endfor %}</ul>{% endif %}{% endwith %}
+                    </div>
+                </div>
+                {% endif %}{% endfor %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+{% endwith %}
+
+<!-- ACTIVITÉS & DESTINATIONS -->
+{% load content_tags %}{% get_activities as activities %}
+{% if activities %}
+<section class="py-5" style="background:var(--dark);overflow:hidden" id="destinations">
+    <div class="container">
+        <div class="text-center mb-4">
+            <div class="section-tag">Activités et Destination</div>
+            <h2 class="section-title-lg" style="color:#fff">Profitez de votre <strong>voyage</strong></h2>
+            <div class="divider-gold mx-auto"></div>
+        </div>
+    </div>
+    <div style="position:relative">
+        <!-- Flèches -->
+        <button onclick="scrollActivities(-1)" style="position:absolute;left:12px;top:50%;transform:translateY(-80%);z-index:10;width:48px;height:48px;border-radius:50%;background:rgba(0,0,0,.55);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.15);color:#fff;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s" onmouseover="this.style.background='rgba(201,169,110,.7)'" onmouseout="this.style.background='rgba(0,0,0,.55)'">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+        <button onclick="scrollActivities(1)" style="position:absolute;right:12px;top:50%;transform:translateY(-80%);z-index:10;width:48px;height:48px;border-radius:50%;background:rgba(0,0,0,.55);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.15);color:#fff;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s" onmouseover="this.style.background='rgba(201,169,110,.7)'" onmouseout="this.style.background='rgba(0,0,0,.55)'">
+            <i class="fas fa-chevron-right"></i>
+        </button>
+
+        <!-- Carrousel -->
+        <div id="activitiesTrack" style="display:flex;gap:24px;overflow-x:auto;scroll-behavior:smooth;padding:0 40px 20px;-ms-overflow-style:none;scrollbar-width:none">
+            {% for a in activities %}
+            <div style="min-width:340px;max-width:340px;flex-shrink:0">
+                <div style="border-radius:12px;overflow:hidden;height:380px;position:relative">
+                    {% with img=a.get_image %}
+                    {% if img %}
+                    <img src="{{ img }}" alt="{{ a.name }}" style="width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    {% else %}
+                    <div style="width:100%;height:100%;background:linear-gradient(135deg,#2C2C2C,#1A1A1A);display:flex;align-items:center;justify-content:center">
+                        <i class="fas fa-map-marker-alt" style="font-size:3rem;color:rgba(201,169,110,.3)"></i>
+                    </div>
+                    {% endif %}
+                    {% endwith %}
+                </div>
+                <h5 style="color:#fff;font-family:var(--font-serif);font-size:1.15rem;font-weight:600;margin:16px 0 8px">{{ a.name }}</h5>
+                <p style="color:rgba(255,255,255,.55);font-size:.84rem;line-height:1.6;margin:0;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">{{ a.description }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- CONTACT -->
+<section id="contact" style="background:#FAF8F4;padding:80px 0">
+  <div class="container">
+    <div class="row justify-content-center mb-5">
+      <div class="col-lg-6 text-center">
+        <div class="section-tag">Contact</div>
+        <h2 class="section-title-lg" style="color:#111">Contactez-nous</h2>
+        <div class="divider-gold mx-auto"></div>
+        <p style="color:#6B7280;font-size:.92rem;margin-top:16px">Une question, une demande spéciale ? Notre équipe est disponible pour vous.</p>
+      </div>
+    </div>
+    <div class="row g-5 align-items-start justify-content-center">
+
+      <!-- Infos de contact -->
+      <div class="col-lg-4">
+        <div style="background:#1A1D27;border-radius:16px;padding:36px 32px;height:100%">
+          <h4 style="color:#fff;font-family:var(--font-serif);font-size:1.2rem;font-weight:400;margin-bottom:28px">Nos coordonnées</h4>
+          {% if info and info.address %}
+          <div style="display:flex;gap:14px;margin-bottom:22px;align-items:flex-start">
+            <div style="width:40px;height:40px;background:rgba(201,169,110,.12);border:1px solid rgba(201,169,110,.3);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <i class="fas fa-map-marker-alt" style="color:#C9A96E;font-size:.85rem"></i>
+            </div>
+            <div>
+              <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.4);margin-bottom:4px">Adresse</div>
+              <div style="color:rgba(255,255,255,.85);font-size:.88rem;line-height:1.6">{{ info.address }}</div>
+            </div>
+          </div>
+          {% endif %}
+          {% if info and info.phone %}
+          <div style="display:flex;gap:14px;margin-bottom:22px;align-items:flex-start">
+            <div style="width:40px;height:40px;background:rgba(201,169,110,.12);border:1px solid rgba(201,169,110,.3);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <i class="fas fa-phone" style="color:#C9A96E;font-size:.85rem"></i>
+            </div>
+            <div>
+              <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.4);margin-bottom:4px">Téléphone</div>
+              <a href="tel:{{ info.phone }}" style="color:rgba(255,255,255,.85);font-size:.88rem;text-decoration:none">{{ info.phone }}</a>
+            </div>
+          </div>
+          {% endif %}
+          {% if info and info.email %}
+          <div style="display:flex;gap:14px;margin-bottom:22px;align-items:flex-start">
+            <div style="width:40px;height:40px;background:rgba(201,169,110,.12);border:1px solid rgba(201,169,110,.3);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <i class="fas fa-envelope" style="color:#C9A96E;font-size:.85rem"></i>
+            </div>
+            <div>
+              <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.4);margin-bottom:4px">Email</div>
+              <a href="mailto:{{ info.email }}" style="color:rgba(255,255,255,.85);font-size:.88rem;text-decoration:none">{{ info.email }}</a>
+            </div>
+          </div>
+          {% endif %}
+          <div style="display:flex;gap:14px;align-items:flex-start">
+            <div style="width:40px;height:40px;background:rgba(201,169,110,.12);border:1px solid rgba(201,169,110,.3);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <i class="fas fa-clock" style="color:#C9A96E;font-size:.85rem"></i>
+            </div>
+            <div>
+              <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.4);margin-bottom:4px">Horaires</div>
+              <div style="color:rgba(255,255,255,.85);font-size:.88rem;line-height:1.7">
+                Check-in : {% if info %}{{ info.checkin_time }}{% else %}14h00{% endif %}<br>
+                Check-out : {% if info %}{{ info.checkout_time }}{% else %}12h00{% endif %}<br>
+                Réception : 24h/24
+              </div>
+            </div>
+          </div>
+          {% if info and info.whatsapp_number %}
+          <a href="https://wa.me/{{ info.whatsapp_number }}" target="_blank"
+             style="display:flex;align-items:center;gap:10px;margin-top:28px;background:rgba(37,211,102,.12);border:1px solid rgba(37,211,102,.3);border-radius:10px;padding:12px 16px;text-decoration:none;transition:background .2s"
+             onmouseover="this.style.background='rgba(37,211,102,.2)'" onmouseout="this.style.background='rgba(37,211,102,.12)'">
+            <i class="fab fa-whatsapp" style="color:#25D366;font-size:1.2rem"></i>
+            <span style="color:#fff;font-size:.85rem">Écrire sur WhatsApp</span>
+          </a>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Formulaire -->
+      <div class="col-lg-6">
+        <div style="background:#fff;border-radius:16px;padding:40px;box-shadow:0 4px 24px rgba(0,0,0,.06);border:1px solid #E5E7EB">
+          <h4 style="color:#111;font-family:var(--font-serif);font-size:1.2rem;font-weight:400;margin-bottom:24px">Envoyez-nous un message</h4>
+
+          <!-- Success / Error alerts (hidden by default) -->
+          <div id="contact-success" style="display:none;background:#EAF3DE;border:1px solid #C0DD97;border-radius:10px;padding:16px 20px;margin-bottom:20px;color:#3B6D11;font-size:.9rem">
+            <i class="fas fa-check-circle me-2"></i><span id="contact-success-msg"></span>
+          </div>
+          <div id="contact-error" style="display:none;background:#FCEBEB;border:1px solid #F09595;border-radius:10px;padding:16px 20px;margin-bottom:20px;color:#A32D2D;font-size:.9rem">
+            <i class="fas fa-exclamation-circle me-2"></i><span id="contact-error-msg"></span>
+          </div>
+
+          <form id="contactForm" novalidate>
+            {% csrf_token %}
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label style="font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:#6B7280;margin-bottom:6px;display:block">Nom complet *</label>
+                <input type="text" name="name" id="cf-name" class="form-control" placeholder="Votre nom" required
+                       style="border:1px solid #E5E7EB;border-radius:8px;padding:11px 14px;font-size:.9rem">
+                <div class="contact-field-error" id="err-name" style="display:none;color:#A32D2D;font-size:.78rem;margin-top:4px"></div>
+              </div>
+              <div class="col-md-6">
+                <label style="font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:#6B7280;margin-bottom:6px;display:block">Email *</label>
+                <input type="email" name="email" id="cf-email" class="form-control" placeholder="votre@email.com" required
+                       style="border:1px solid #E5E7EB;border-radius:8px;padding:11px 14px;font-size:.9rem">
+                <div class="contact-field-error" id="err-email" style="display:none;color:#A32D2D;font-size:.78rem;margin-top:4px"></div>
+              </div>
+              <div class="col-md-6">
+                <label style="font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:#6B7280;margin-bottom:6px;display:block">Téléphone <span style="color:#9CA3AF">(optionnel)</span></label>
+                <input type="tel" name="phone" id="cf-phone" class="form-control" placeholder="+212 6XX XXX XXX"
+                       style="border:1px solid #E5E7EB;border-radius:8px;padding:11px 14px;font-size:.9rem">
+              </div>
+              <div class="col-md-6">
+                <label style="font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:#6B7280;margin-bottom:6px;display:block">Sujet *</label>
+                <select name="subject" id="cf-subject" class="form-select" required
+                        style="border:1px solid #E5E7EB;border-radius:8px;padding:11px 14px;font-size:.9rem">
+                  <option value="">Choisir un sujet…</option>
+                  <option>Demande de renseignements</option>
+                  <option>Réservation de groupe</option>
+                  <option>Événement / Séminaire</option>
+                  <option>Réclamation / Problème</option>
+                  <option>Partenariat</option>
+                  <option>Autre</option>
+                </select>
+                <div class="contact-field-error" id="err-subject" style="display:none;color:#A32D2D;font-size:.78rem;margin-top:4px"></div>
+              </div>
+              <div class="col-12">
+                <label style="font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:#6B7280;margin-bottom:6px;display:block">Message *</label>
+                <textarea name="message" id="cf-message" class="form-control" rows="5" placeholder="Décrivez votre demande…" required
+                          style="border:1px solid #E5E7EB;border-radius:8px;padding:11px 14px;font-size:.9rem;resize:vertical"></textarea>
+                <div class="contact-field-error" id="err-message" style="display:none;color:#A32D2D;font-size:.78rem;margin-top:4px"></div>
+              </div>
+              <div class="col-12 mt-2">
+                <button type="submit" id="contact-submit-btn"
+                        style="background:#1A1D27;color:#C9A96E;border:1.5px solid rgba(201,169,110,.4);border-radius:8px;padding:13px 36px;font-size:.88rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:all .25s;width:100%"
+                        onmouseover="this.style.background='#C9A96E';this.style.color='#1A1D27'"
+                        onmouseout="this.style.background='#1A1D27';this.style.color='#C9A96E'">
+                  <i class="fas fa-paper-plane me-2"></i>Envoyer le message
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section" id="cta-section-dynamic">
+{% if info and info.cta_image_url %}
+<style>#cta-section-dynamic::before { background-image: url('{{ info.cta_image_url }}') !important; }</style>
+{% endif %}
+    <div class="cta-overlay"></div>
+    <div class="container text-center cta-content">
+        <div class="section-tag light">Offre Spéciale</div>
+        <h2 class="cta-title">Réservez Directement & Économisez 15%</h2>
+        <p class="cta-subtitle">Profitez de notre meilleur tarif garanti en réservant sur notre site officiel.</p>
+        <a href="{% url 'room_list' %}" class="btn btn-gold btn-lg px-5 mt-3"><i class="fas fa-gift me-2"></i>Profiter de l'Offre</a>
+    </div>
+</section>
+
+{% endblock %}
+{% block extra_js %}
+<script>
+function quickSearch() {
+    const category = document.getElementById('qb-category').value;
+    let url = "{% url 'room_list' %}";
+    if (category) url += '?category=' + category;
+    window.location.href = url;
+}
+const today = new Date().toISOString().split('T')[0];
+document.getElementById('qb-checkin').min = today;
+document.getElementById('qb-checkout').min = today;
+document.getElementById('qb-checkin').addEventListener('change', function() { document.getElementById('qb-checkout').min = this.value; });
+// Counter animation
+function animateCounters() {
+    document.querySelectorAll('.stat-number').forEach(el => {
+        const target = parseInt(el.dataset.target);
+        let current = 0;
+        const inc = target / 60;
+        const timer = setInterval(() => {
+            current += inc;
+            if (current >= target) { current = target; clearInterval(timer); }
+            el.textContent = Math.floor(current);
+        }, 30);
+    });
+}
+const observer = new IntersectionObserver(e => { e.forEach(x => { if (x.isIntersecting) { animateCounters(); observer.disconnect(); } }); }, { threshold: 0.5 });
+const s = document.querySelector('.stats-section');
+if (s) observer.observe(s);
+
+// Activities carousel scroll
+function scrollActivities(dir) {
+    const track = document.getElementById('activitiesTrack');
+    if (track) track.scrollBy({ left: dir * 370, behavior: 'smooth' });
+}
+
+// Contact form AJAX
+document.getElementById('contactForm')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const btn = document.getElementById('contact-submit-btn');
+    const fields = ['name','email','subject','message'];
+
+    // Clear previous errors
+    fields.forEach(f => {
+        const el = document.getElementById('err-' + f);
+        if (el) el.style.display = 'none';
+    });
+    document.getElementById('contact-success').style.display = 'none';
+    document.getElementById('contact-error').style.display = 'none';
+
+    // Disable button + loading state
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Envoi en cours…';
+
+    const data = new FormData(this);
+    try {
+        const res = await fetch("{% url 'contact_submit' %}", {
+            method: 'POST',
+            headers: {'X-CSRFToken': data.get('csrfmiddlewaretoken')},
+            body: data,
+        });
+        const json = await res.json();
+        if (json.success) {
+            document.getElementById('contact-success-msg').textContent = json.message;
+            document.getElementById('contact-success').style.display = 'block';
+            this.reset();
+            this.scrollIntoView({behavior:'smooth', block:'center'});
+        } else if (json.errors) {
+            Object.entries(json.errors).forEach(([field, msg]) => {
+                const el = document.getElementById('err-' + field);
+                if (el) { el.textContent = msg; el.style.display = 'block'; }
+            });
+        } else {
+            document.getElementById('contact-error-msg').textContent = json.error || 'Une erreur est survenue.';
+            document.getElementById('contact-error').style.display = 'block';
+        }
+    } catch(err) {
+        document.getElementById('contact-error-msg').textContent = 'Erreur réseau. Veuillez réessayer.';
+        document.getElementById('contact-error').style.display = 'block';
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Envoyer le message';
+    }
+});
+</script>
+{% endblock %}

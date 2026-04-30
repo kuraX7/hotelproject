@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+body{margin:0;padding:0;background:#F3F4F6;font-family:'Segoe UI',Arial,sans-serif}
+.wrap{max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08)}
+.header{background:#1A1D27;padding:40px;text-align:center}
+.logo{font-family:Georgia,serif;color:#C9A96E;font-size:1.6rem;font-weight:400;letter-spacing:.04em}
+.logo-sub{color:rgba(255,255,255,.4);font-size:.72rem;letter-spacing:.15em;text-transform:uppercase;margin-top:4px}
+.hero{background:linear-gradient(135deg,#1A1D27,#2C2F3E);padding:36px 40px;text-align:center;border-bottom:1px solid rgba(201,169,110,.2)}
+.check{width:60px;height:60px;background:rgba(29,158,117,.15);border:1.5px solid rgba(29,158,117,.4);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:16px}
+.hero h2{color:#fff;font-family:Georgia,serif;font-size:1.4rem;font-weight:400;margin:0 0 8px}
+.hero p{color:rgba(255,255,255,.6);font-size:.88rem;margin:0}
+.body{padding:36px 40px}
+.body p{font-size:.92rem;color:#374151;line-height:1.8;margin:0 0 16px}
+.recap-box{background:#F9FAFB;border:1px solid #E5E7EB;border-radius:10px;padding:20px 24px;margin:24px 0}
+.recap-box .recap-title{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:#9CA3AF;margin-bottom:12px}
+.recap-row{display:flex;gap:16px;margin-bottom:8px;font-size:.85rem}
+.recap-row .lbl{color:#9CA3AF;min-width:80px}
+.recap-row .val{color:#111827;font-weight:500}
+.msg-preview{background:#FFFBF0;border-left:3px solid #C9A96E;padding:12px 16px;border-radius:0 8px 8px 0;font-size:.85rem;color:#6B7280;line-height:1.7;margin-top:8px;font-style:italic}
+.divider{border:none;border-top:1px solid #E5E7EB;margin:24px 0}
+.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+.contact-item{background:#F9FAFB;border-radius:8px;padding:12px 14px}
+.contact-item .ci-label{font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:#9CA3AF;margin-bottom:4px}
+.contact-item .ci-val{font-size:.85rem;color:#374151;font-weight:500}
+.footer-dark{background:#1A1D27;padding:24px 40px;text-align:center}
+.footer-dark p{font-size:.75rem;color:rgba(255,255,255,.35);margin:0;line-height:1.7}
+.footer-dark a{color:#C9A96E;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div class="logo">{% if info %}{{ info.hotel_name }}{% else %}Al Andalus{% endif %}</div>
+    <div class="logo-sub">{% if info %}{{ info.tagline }}{% else %}HOTEL & SPA{% endif %}</div>
+  </div>
+  <div class="hero">
+    <div class="check">✓</div>
+    <h2>Message bien reçu !</h2>
+    <p>Nous vous répondrons dans les plus brefs délais.</p>
+  </div>
+  <div class="body">
+    <p>Bonjour <strong>{{ contact.name }}</strong>,</p>
+    <p>Merci de nous avoir contactés. Votre message a bien été reçu et notre équipe vous répondra dans un délai de <strong>24 à 48 heures</strong>.</p>
+
+    <div class="recap-box">
+      <div class="recap-title">Récapitulatif de votre message</div>
+      <div class="recap-row"><span class="lbl">Sujet</span><span class="val">{{ contact.subject }}</span></div>
+      <div class="recap-row"><span class="lbl">Envoyé le</span><span class="val">{{ contact.created_at|date:"d/m/Y à H:i" }}</span></div>
+      <div class="msg-preview">{{ contact.message|truncatechars:200 }}</div>
+    </div>
+
+    <p>En attendant notre réponse, n'hésitez pas à nous appeler directement ou à consulter notre FAQ.</p>
+
+    <hr class="divider">
+    <p style="font-size:.82rem;color:#6B7280;margin-bottom:12px"><strong>Nos coordonnées</strong></p>
+    <div class="contact-grid">
+      {% if info and info.phone %}
+      <div class="contact-item">
+        <div class="ci-label">Téléphone</div>
+        <div class="ci-val">{{ info.phone }}</div>
+      </div>
+      {% endif %}
+      {% if info and info.email %}
+      <div class="contact-item">
+        <div class="ci-label">Email direct</div>
+        <div class="ci-val">{{ info.email }}</div>
+      </div>
+      {% endif %}
+      {% if info and info.address %}
+      <div class="contact-item" style="grid-column:1/-1">
+        <div class="ci-label">Adresse</div>
+        <div class="ci-val">{{ info.address }}</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  <div class="footer-dark">
+    <p>© {% now "Y" %} {% if info %}{{ info.hotel_name }}{% else %}Hôtel Al Andalus{% endif %} · Tous droits réservés</p>
+    <p>Cet email a été envoyé automatiquement suite à votre message sur <a href="{{ site_url }}">notre site</a>.</p>
+  </div>
+</div>
+</body>
+</html>

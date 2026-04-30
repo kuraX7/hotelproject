@@ -1,0 +1,192 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}Activités & Destinations{% endblock %}
+{% block page_title %}Activités & Destinations{% endblock %}
+{% block page_subtitle %}{{ activities|length }} activité{{ activities|length|pluralize }}{% endblock %}
+{% block topbar_actions %}
+<button class="btn btn-sm" style="background:linear-gradient(135deg,#C9A96E,#A8854A);color:#fff;font-weight:600;font-size:.82rem;padding:8px 18px;border:none;border-radius:8px" data-bs-toggle="modal" data-bs-target="#addModal">
+    <i class="fas fa-plus me-1"></i>Ajouter
+</button>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    {% for a in activities %}
+    <div class="col-lg-4 col-md-6">
+        <div style="background:#fff;border-radius:12px;border:1px solid #E5E7EB;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.04)">
+            <!-- Image -->
+            {% with img=a.get_image %}
+            {% if img %}
+            <div style="height:200px;overflow:hidden;position:relative">
+                <img src="{{ img }}" alt="{{ a.name }}" style="width:100%;height:100%;object-fit:cover;display:block">
+                {% if not a.is_active %}
+                <div style="position:absolute;top:10px;right:10px;background:#EF4444;color:#fff;font-size:.68rem;font-weight:600;padding:3px 10px;border-radius:12px">Masqué</div>
+                {% endif %}
+            </div>
+            {% else %}
+            <div style="height:200px;background:linear-gradient(135deg,#F3F4F6,#E5E7EB);display:flex;align-items:center;justify-content:center;position:relative">
+                <i class="fas fa-image" style="font-size:2.5rem;color:#D1D5DB"></i>
+                {% if not a.is_active %}
+                <div style="position:absolute;top:10px;right:10px;background:#EF4444;color:#fff;font-size:.68rem;font-weight:600;padding:3px 10px;border-radius:12px">Masqué</div>
+                {% endif %}
+            </div>
+            {% endif %}
+            {% endwith %}
+
+            <!-- Infos -->
+            <div style="padding:16px">
+                <div style="display:flex;justify-content:space-between;align-items:start;gap:8px;margin-bottom:8px">
+                    <h5 style="font-size:1rem;font-weight:600;color:#1A1A1A;margin:0;line-height:1.3">{{ a.name }}</h5>
+                    <span style="font-size:.68rem;color:#9CA3AF;white-space:nowrap">Ordre : {{ a.order }}</span>
+                </div>
+                <p style="font-size:.82rem;color:#6B7280;line-height:1.5;margin:0 0 14px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">{{ a.description }}</p>
+
+                <!-- Actions -->
+                <div style="display:flex;gap:6px;flex-wrap:wrap">
+                    <button class="btn btn-sm" style="background:#F9FAFB;border:1px solid #E5E7EB;font-size:.75rem;color:#374151;padding:5px 12px;border-radius:6px"
+                            onclick="openEdit({{ a.id }}, '{{ a.name|escapejs }}', '{{ a.description|escapejs }}', '{{ a.image_url|escapejs }}', {{ a.order }}, {{ a.is_active|yesno:'true,false' }})"
+                            data-bs-toggle="modal" data-bs-target="#editModal">
+                        <i class="fas fa-edit me-1"></i>Modifier
+                    </button>
+                    <form method="post" action="{% url 'dashboard_activity_toggle' a.id %}" style="display:inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm" style="background:#F9FAFB;border:1px solid #E5E7EB;font-size:.75rem;color:#374151;padding:5px 12px;border-radius:6px">
+                            <i class="fas fa-{% if a.is_active %}eye-slash{% else %}eye{% endif %} me-1"></i>{% if a.is_active %}Masquer{% else %}Afficher{% endif %}
+                        </button>
+                    </form>
+                    <form method="post" action="{% url 'dashboard_activity_delete' a.id %}" style="display:inline"
+                          onsubmit="return confirm('Supprimer « {{ a.name|escapejs }} » ?')">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm" style="background:#FEF2F2;border:1px solid #FECACA;font-size:.75rem;color:#991B1B;padding:5px 12px;border-radius:6px">
+                            <i class="fas fa-trash me-1"></i>Supprimer
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div style="background:#F9FAFB;border:2px dashed #E5E7EB;border-radius:12px;padding:60px 20px;text-align:center">
+            <i class="fas fa-map-marked-alt" style="font-size:2.5rem;color:#D1D5DB;margin-bottom:12px;display:block"></i>
+            <p style="color:#6B7280;font-size:.92rem;margin:0 0 16px">Aucune activité configurée.</p>
+            <button class="btn btn-sm" style="background:linear-gradient(135deg,#C9A96E,#A8854A);color:#fff;font-weight:600;font-size:.82rem;padding:8px 18px;border:none;border-radius:8px" data-bs-toggle="modal" data-bs-target="#addModal">
+                <i class="fas fa-plus me-1"></i>Ajouter la première activité
+            </button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- ══ MODAL AJOUT ══ -->
+<div class="modal fade" id="addModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-radius:14px;border:none;box-shadow:0 20px 60px rgba(0,0,0,.15)">
+            <div class="modal-header" style="background:linear-gradient(135deg,#1A1A1A,#2C2C2C);border-radius:14px 14px 0 0;border:none;padding:20px 24px">
+                <h5 class="modal-title" style="color:#fff;font-size:1rem;font-weight:600"><i class="fas fa-plus-circle me-2" style="color:#C9A96E"></i>Nouvelle activité</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'dashboard_activity_add' %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body" style="padding:24px">
+                    <div class="mb-3">
+                        <label class="form-label" style="font-size:.82rem;font-weight:600;color:#374151">Nom du lieu / activité</label>
+                        <input type="text" name="name" class="form-control" placeholder="ex: Jardin Majorelle" required style="border-radius:8px">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" style="font-size:.82rem;font-weight:600;color:#374151">Description</label>
+                        <textarea name="description" class="form-control" rows="3" placeholder="Décrivez ce lieu..." required style="border-radius:8px"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" style="font-size:.82rem;font-weight:600;color:#374151">Image (upload)</label>
+                        <input type="file" name="image_file" class="form-control" accept="image/*" style="border-radius:8px">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" style="font-size:.82rem;font-weight:600;color:#374151">Ou URL de l'image</label>
+                        <input type="url" name="image_url" class="form-control" placeholder="https://..." style="border-radius:8px">
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <label class="form-label" style="font-size:.82rem;font-weight:600;color:#374151">Ordre</label>
+                            <input type="number" name="order" class="form-control" value="0" style="border-radius:8px">
+                        </div>
+                        <div class="col-6 d-flex align-items-end">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="is_active" checked id="addActive">
+                                <label class="form-check-label" for="addActive" style="font-size:.82rem;color:#374151">Visible sur le site</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border:none;padding:0 24px 20px">
+                    <button type="button" class="btn btn-sm" style="background:#F3F4F6;color:#374151;border:1px solid #E5E7EB;padding:8px 18px;border-radius:8px;font-size:.82rem" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-sm" style="background:linear-gradient(135deg,#C9A96E,#A8854A);color:#fff;font-weight:600;padding:8px 18px;border:none;border-radius:8px;font-size:.82rem">
+                        <i class="fas fa-check me-1"></i>Ajouter
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ══ MODAL ÉDITION ══ -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-radius:14px;border:none;box-shadow:0 20px 60px rgba(0,0,0,.15)">
+            <div class="modal-header" style="background:linear-gradient(135deg,#1A1A1A,#2C2C2C);border-radius:14px 14px 0 0;border:none;padding:20px 24px">
+                <h5 class="modal-title" style="color:#fff;font-size:1rem;font-weight:600"><i class="fas fa-edit me-2" style="color:#C9A96E"></i>Modifier l'activité</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editForm" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body" style="padding:24px">
+                    <div class="mb-3">
+                        <label class="form-label" style="font-size:.82rem;font-weight:600;color:#374151">Nom du lieu / activité</label>
+                        <input type="text" name="name" id="editName" class="form-control" required style="border-radius:8px">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" style="font-size:.82rem;font-weight:600;color:#374151">Description</label>
+                        <textarea name="description" id="editDesc" class="form-control" rows="3" required style="border-radius:8px"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" style="font-size:.82rem;font-weight:600;color:#374151">Image (upload)</label>
+                        <input type="file" name="image_file" class="form-control" accept="image/*" style="border-radius:8px">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" style="font-size:.82rem;font-weight:600;color:#374151">Ou URL de l'image</label>
+                        <input type="url" name="image_url" id="editImgUrl" class="form-control" style="border-radius:8px">
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <label class="form-label" style="font-size:.82rem;font-weight:600;color:#374151">Ordre</label>
+                            <input type="number" name="order" id="editOrder" class="form-control" style="border-radius:8px">
+                        </div>
+                        <div class="col-6 d-flex align-items-end">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="is_active" id="editActive">
+                                <label class="form-check-label" for="editActive" style="font-size:.82rem;color:#374151">Visible sur le site</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border:none;padding:0 24px 20px">
+                    <button type="button" class="btn btn-sm" style="background:#F3F4F6;color:#374151;border:1px solid #E5E7EB;padding:8px 18px;border-radius:8px;font-size:.82rem" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-sm" style="background:linear-gradient(135deg,#C9A96E,#A8854A);color:#fff;font-weight:600;padding:8px 18px;border:none;border-radius:8px;font-size:.82rem">
+                        <i class="fas fa-check me-1"></i>Enregistrer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function openEdit(id, name, desc, imgUrl, order, active) {
+    document.getElementById('editForm').action = '/dashboard/contenu/activites/' + id + '/modifier/';
+    document.getElementById('editName').value = name;
+    document.getElementById('editDesc').value = desc;
+    document.getElementById('editImgUrl').value = imgUrl;
+    document.getElementById('editOrder').value = order;
+    document.getElementById('editActive').checked = active;
+}
+</script>
+{% endblock %}

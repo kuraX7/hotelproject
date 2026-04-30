@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Réservation Confirmée #{{ booking.id }} — Hôtel Al Andalus{% endblock %}
+
+{% block content %}
+<section class="confirmation-section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-7">
+                <div class="confirmation-card">
+                    <!-- Success Header -->
+                    <div class="confirm-header text-center">
+                        <div class="confirm-icon-wrap">
+                            <div class="confirm-icon">✓</div>
+                            <div class="confirm-ripple"></div>
+                        </div>
+                        <h2 class="confirm-title">Réservation Confirmée !</h2>
+                        <p class="confirm-subtitle">Merci, <strong>{{ booking.name }}</strong>. Votre réservation a été enregistrée avec succès.</p>
+                        <div class="booking-ref">Référence : <strong>#AL{{ booking.id|stringformat:"05d" }}</strong></div>
+                    </div>
+
+                    <!-- Booking Details -->
+                    <div class="confirm-details">
+                        <h5 class="details-title"><i class="fas fa-receipt text-gold me-2"></i>Détails de la réservation</h5>
+                        <div class="details-room-banner">
+                            <div class="details-room-info">
+                                <span class="room-category-badge-sm">{{ booking.room.get_category_display }}</span>
+                                <h6 class="mt-2 mb-0">{{ booking.room.name }}</h6>
+                            </div>
+                        </div>
+                        <div class="details-grid">
+                            <div class="detail-row">
+                                <div class="detail-item">
+                                    <i class="fas fa-calendar-check text-gold"></i>
+                                    <div>
+                                        <span class="detail-label">Arrivée</span>
+                                        <strong class="detail-value">{{ booking.check_in|date:"d F Y" }}</strong>
+                                    </div>
+                                </div>
+                                <div class="detail-item">
+                                    <i class="fas fa-calendar-times text-gold"></i>
+                                    <div>
+                                        <span class="detail-label">Départ</span>
+                                        <strong class="detail-value">{{ booking.check_out|date:"d F Y" }}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-item">
+                                    <i class="fas fa-moon text-gold"></i>
+                                    <div>
+                                        <span class="detail-label">Durée</span>
+                                        <strong class="detail-value">{{ booking.nights }} nuit{{ booking.nights|pluralize }}</strong>
+                                    </div>
+                                </div>
+                                <div class="detail-item">
+                                    <i class="fas fa-users text-gold"></i>
+                                    <div>
+                                        <span class="detail-label">Voyageurs</span>
+                                        <strong class="detail-value">{{ booking.guests }} personne{{ booking.guests|pluralize }}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-item">
+                                    <i class="fas fa-user text-gold"></i>
+                                    <div>
+                                        <span class="detail-label">Nom</span>
+                                        <strong class="detail-value">{{ booking.name }}</strong>
+                                    </div>
+                                </div>
+                                <div class="detail-item">
+                                    <i class="fas fa-envelope text-gold"></i>
+                                    <div>
+                                        <span class="detail-label">Email</span>
+                                        <strong class="detail-value">{{ booking.email }}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Price -->
+                        <div class="total-price-banner">
+                            <span>Montant Total</span>
+                            <span class="total-price-amount">{{ booking.total_price|floatformat:0 }} MAD</span>
+                        </div>
+                        <p class="text-center small text-muted">Taxes et charges incluses · Paiement à l'hôtel</p>
+                    </div>
+
+                    <!-- Info Box -->
+                    <div class="confirm-info-box">
+                        <h6><i class="fas fa-info-circle text-gold me-2"></i>Informations importantes</h6>
+                        <ul class="confirm-info-list">
+                            <li><i class="fas fa-check-circle text-gold"></i>Check-in : à partir de <strong>{% if info %}{{ info.checkin_time }}{% else %}14h00{% endif %}</strong></li>
+                            <li><i class="fas fa-check-circle text-gold"></i>Check-out : avant <strong>{% if info %}{{ info.checkout_time }}{% else %}12h00{% endif %}</strong></li>
+                            <li><i class="fas fa-check-circle text-gold"></i>Annulation : voir nos <a href="/regles/" style="color:inherit">conditions d'annulation</a></li>
+                            <li><i class="fas fa-check-circle text-gold"></i>Un email de confirmation vous sera envoyé à <strong>{{ booking.email }}</strong></li>
+                            <li><i class="fas fa-check-circle text-gold"></i>Paiement à régler à la réception de l'hôtel</li>
+                        </ul>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="confirm-actions">
+                        <a href="{% url 'payment_initiate' booking.id %}" class="btn btn-gold px-4">
+                        <i class="fas fa-credit-card me-2"></i>Payer en ligne (CMI)
+                    </a>
+                    <a href="{% url 'home' %}" class="btn btn-outline-secondary px-4">
+                            <i class="fas fa-home me-2"></i>Retour à l'Accueil
+                        </a>
+                        <a href="{% url 'room_list' %}" class="btn btn-outline-secondary px-4">
+                            <i class="fas fa-bed me-2"></i>Voir d'autres Chambres
+                        </a>
+                        <button class="btn btn-outline-secondary" onclick="window.print()">
+                            <i class="fas fa-print me-1"></i>Imprimer
+                        </button>
+                    </div>
+
+                    <!-- Contact -->
+                    <div class="text-center mt-4 p-3 rounded" style="background: var(--bs-light);">
+                        <small class="text-muted">
+                            <i class="fas fa-headset text-gold me-1"></i>
+                            {% load content_tags %}{% get_hotel_info as cinfo %}Des questions ? Contactez-nous au <a href="tel:{% if cinfo %}{{ cinfo.phone }}{% else %}+212522000000{% endif %}" class="text-dark fw-bold">{% if cinfo %}{{ cinfo.phone }}{% else %}+212 5 22 XX XX XX{% endif %}</a>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

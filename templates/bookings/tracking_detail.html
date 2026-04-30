@@ -1,0 +1,233 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Réservation {{ booking.reference }} — Hôtel Al Andalus{% endblock %}
+
+{% block content %}
+{% load content_tags %}{% get_hotel_info as pg_info %}
+
+<section class="page-hero" style="height:200px">
+  <div class="page-hero-overlay"></div>
+  <div style="position:absolute;inset:0;{% if pg_info and pg_info.hero_booking_image_url %}background-image:url('{{ pg_info.hero_booking_image_url }}');background-size:cover;background-position:center{% else %}background:linear-gradient(135deg,#1A1D27,#2C2C2C){% endif %}"></div>
+  <div class="container page-hero-content">
+    <nav aria-label="breadcrumb"><ol class="breadcrumb breadcrumb-light">
+      <li class="breadcrumb-item"><a href="{% url 'home' %}">Accueil</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'tracking_search' %}">Suivi</a></li>
+      <li class="breadcrumb-item active">{{ booking.reference }}</li>
+    </ol></nav>
+    <h1 class="page-hero-title">Ma réservation</h1>
+  </div>
+</section>
+
+<section class="py-5" style="background:var(--cream);min-height:60vh">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+
+        <!-- Carte principale -->
+        <div style="background:#fff;border-radius:14px;border:1px solid var(--border-light);box-shadow:0 2px 20px rgba(0,0,0,.06);overflow:hidden;margin-bottom:20px">
+
+          <!-- En-tête statut -->
+          <div style="background:var(--dark);padding:24px 28px;border-bottom:2px solid var(--gold);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+            <div>
+              <div style="color:rgba(255,255,255,.55);font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;margin-bottom:4px">Référence</div>
+              <h2 style="color:var(--gold);font-family:var(--font-serif);font-size:1.8rem;margin:0;letter-spacing:.05em">{{ booking.reference }}</h2>
+            </div>
+            <div>
+              {% if booking.status == 'confirmed' %}
+                <span style="display:inline-flex;align-items:center;gap:6px;background:rgba(201,169,110,.15);color:var(--gold);border:1px solid var(--gold);padding:6px 14px;border-radius:20px;font-size:.78rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase">
+                  <i class="fas fa-check-circle"></i>Confirmée
+                </span>
+              {% elif booking.status == 'pending' %}
+                <span style="display:inline-flex;align-items:center;gap:6px;background:rgba(245,158,11,.15);color:#F59E0B;border:1px solid #F59E0B;padding:6px 14px;border-radius:20px;font-size:.78rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase">
+                  <i class="fas fa-clock"></i>En attente
+                </span>
+              {% elif booking.status == 'cancelled' %}
+                <span style="display:inline-flex;align-items:center;gap:6px;background:rgba(239,68,68,.15);color:#EF4444;border:1px solid #EF4444;padding:6px 14px;border-radius:20px;font-size:.78rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase">
+                  <i class="fas fa-times-circle"></i>Annulée
+                </span>
+              {% elif booking.status == 'completed' %}
+                <span style="display:inline-flex;align-items:center;gap:6px;background:rgba(107,114,128,.15);color:#6B7280;border:1px solid #6B7280;padding:6px 14px;border-radius:20px;font-size:.78rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase">
+                  <i class="fas fa-check-double"></i>Terminée
+                </span>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Corps -->
+          <div style="padding:28px">
+
+            <div class="row g-4">
+
+              <div class="col-md-6">
+                <div style="font-size:.72rem;color:#9CA3AF;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">Client</div>
+                <div style="font-size:1rem;font-weight:600;color:var(--dark)">{{ booking.name }}</div>
+                <div style="font-size:.85rem;color:#6B7280;margin-top:2px">{{ booking.email }}</div>
+                {% if booking.phone %}<div style="font-size:.85rem;color:#6B7280">{{ booking.phone }}</div>{% endif %}
+              </div>
+
+              <div class="col-md-6">
+                <div style="font-size:.72rem;color:#9CA3AF;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">Chambre</div>
+                <div style="font-size:1rem;font-weight:600;font-family:var(--font-serif);color:var(--dark)">{{ booking.room.name }}</div>
+                <div style="font-size:.85rem;color:#6B7280;margin-top:2px">
+                  {{ booking.room.capacity }} personne{{ booking.room.capacity|pluralize }} · {{ booking.room.size }} m²
+                </div>
+              </div>
+
+              <div class="col-md-4">
+                <div style="font-size:.72rem;color:#9CA3AF;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">Arrivée</div>
+                <div style="font-size:1rem;font-weight:600;color:var(--dark)">{{ booking.check_in|date:"d/m/Y" }}</div>
+                <div style="font-size:.78rem;color:#6B7280;margin-top:2px">à partir de {% if pg_info %}{{ pg_info.checkin_time }}{% else %}14h{% endif %}</div>
+              </div>
+
+              <div class="col-md-4">
+                <div style="font-size:.72rem;color:#9CA3AF;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">Départ</div>
+                <div style="font-size:1rem;font-weight:600;color:var(--dark)">{{ booking.check_out|date:"d/m/Y" }}</div>
+                <div style="font-size:.78rem;color:#6B7280;margin-top:2px">avant {% if pg_info %}{{ pg_info.checkout_time }}{% else %}12h{% endif %}</div>
+              </div>
+
+              <div class="col-md-4">
+                <div style="font-size:.72rem;color:#9CA3AF;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">Durée</div>
+                <div style="font-size:1rem;font-weight:600;color:var(--dark)">{{ booking.nights }} nuit{{ booking.nights|pluralize }}</div>
+                <div style="font-size:.78rem;color:#6B7280;margin-top:2px">{{ booking.guests }} voyageur{{ booking.guests|pluralize }}</div>
+              </div>
+
+            </div>
+
+            <!-- Total -->
+            <div style="background:var(--cream);border:1px solid var(--border-light);border-radius:10px;padding:16px 20px;margin-top:24px;display:flex;justify-content:space-between;align-items:center">
+              <div>
+                <div style="font-size:.72rem;color:#9CA3AF;text-transform:uppercase;letter-spacing:.1em">Montant total</div>
+                <div style="font-size:.78rem;color:#6B7280;margin-top:2px">Taxes et frais inclus</div>
+              </div>
+              <div style="font-size:1.8rem;font-weight:700;font-family:var(--font-serif);color:var(--dark)">
+                {{ booking.total_price|floatformat:0 }} <span style="font-size:.9rem;color:var(--gold);font-weight:600">MAD</span>
+              </div>
+            </div>
+
+            {% if booking.special_requests %}
+            <div style="margin-top:20px;padding:14px 16px;background:#FFF8EC;border-left:3px solid var(--gold);border-radius:4px">
+              <div style="font-size:.72rem;color:var(--gold-dark);text-transform:uppercase;letter-spacing:.1em;font-weight:600;margin-bottom:4px">Demandes spéciales</div>
+              <div style="font-size:.88rem;color:#555;line-height:1.5">{{ booking.special_requests }}</div>
+            </div>
+            {% endif %}
+
+            {% if booking.status == 'cancelled' %}
+            <div style="margin-top:20px;padding:16px;background:#FEF2F2;border:1px solid #FECACA;border-radius:8px">
+              <div style="font-size:.85rem;color:#991B1B;font-weight:600;margin-bottom:4px">
+                <i class="fas fa-info-circle me-1"></i>Réservation annulée
+              </div>
+              <div style="font-size:.8rem;color:#7F1D1D">
+                Annulée le {{ booking.cancelled_at|date:"d/m/Y à H:i" }}.
+                {% if booking.refund_requested %}
+                Un remboursement a été demandé et sera traité sous 5-7 jours ouvrés.
+                {% endif %}
+              </div>
+            </div>
+            {% endif %}
+
+          </div>
+        </div>
+
+        <!-- Boutons d'action -->
+        {% if booking.status != 'cancelled' and booking.status != 'completed' %}
+        <div class="row g-3">
+
+          {% if booking.can_be_modified %}
+          <div class="col-md-6 col-lg-3">
+            <a href="{% url 'tracking_edit' booking.id %}"
+               style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 12px;background:#fff;border:1px solid var(--border-light);border-radius:10px;text-decoration:none;color:var(--dark);transition:all .3s;height:100%"
+               onmouseover="this.style.borderColor='var(--gold)';this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 14px rgba(201,169,110,.2)'"
+               onmouseout="this.style.borderColor='var(--border-light)';this.style.transform='translateY(0)';this.style.boxShadow='none'">
+              <i class="fas fa-calendar-alt" style="color:var(--gold);font-size:1.4rem"></i>
+              <span style="font-size:.82rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase">Modifier les dates</span>
+            </a>
+          </div>
+
+          <div class="col-md-6 col-lg-3">
+            <a href="{% url 'tracking_cancel' booking.id %}"
+               style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 12px;background:#fff;border:1px solid var(--border-light);border-radius:10px;text-decoration:none;color:var(--dark);transition:all .3s;height:100%"
+               onmouseover="this.style.borderColor='#EF4444';this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 14px rgba(239,68,68,.15)'"
+               onmouseout="this.style.borderColor='var(--border-light)';this.style.transform='translateY(0)';this.style.boxShadow='none'">
+              <i class="fas fa-times-circle" style="color:#EF4444;font-size:1.4rem"></i>
+              <span style="font-size:.82rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase">Annuler</span>
+            </a>
+          </div>
+          {% endif %}
+
+          <div class="col-md-6 col-lg-3">
+            <a href="{% url 'booking_pdf' booking.id %}"
+               style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 12px;background:#fff;border:1px solid var(--border-light);border-radius:10px;text-decoration:none;color:var(--dark);transition:all .3s;height:100%"
+               onmouseover="this.style.borderColor='var(--gold)';this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 14px rgba(201,169,110,.2)'"
+               onmouseout="this.style.borderColor='var(--border-light)';this.style.transform='translateY(0)';this.style.boxShadow='none'">
+              <i class="fas fa-file-pdf" style="color:var(--gold);font-size:1.4rem"></i>
+              <span style="font-size:.82rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase">Télécharger le reçu</span>
+            </a>
+          </div>
+
+          <div class="col-md-6 col-lg-3">
+            <a href="#contact-info"
+               style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 12px;background:#fff;border:1px solid var(--border-light);border-radius:10px;text-decoration:none;color:var(--dark);transition:all .3s;height:100%"
+               onmouseover="this.style.borderColor='var(--gold)';this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 14px rgba(201,169,110,.2)'"
+               onmouseout="this.style.borderColor='var(--border-light)';this.style.transform='translateY(0)';this.style.boxShadow='none'">
+              <i class="fas fa-headset" style="color:var(--gold);font-size:1.4rem"></i>
+              <span style="font-size:.82rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase">Contacter l'hôtel</span>
+            </a>
+          </div>
+
+        </div>
+        {% else %}
+        <!-- Si annulée ou terminée : juste PDF + contact -->
+        <div class="row g-3">
+          <div class="col-md-6">
+            <a href="{% url 'booking_pdf' booking.id %}"
+               style="display:flex;align-items:center;justify-content:center;gap:10px;padding:16px;background:#fff;border:1px solid var(--border-light);border-radius:10px;text-decoration:none;color:var(--dark);transition:all .3s"
+               onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border-light)'">
+              <i class="fas fa-file-pdf" style="color:var(--gold)"></i>
+              <span style="font-size:.85rem;font-weight:600">Télécharger le reçu</span>
+            </a>
+          </div>
+          <div class="col-md-6">
+            <a href="#contact-info"
+               style="display:flex;align-items:center;justify-content:center;gap:10px;padding:16px;background:#fff;border:1px solid var(--border-light);border-radius:10px;text-decoration:none;color:var(--dark);transition:all .3s"
+               onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border-light)'">
+              <i class="fas fa-headset" style="color:var(--gold)"></i>
+              <span style="font-size:.85rem;font-weight:600">Contacter l'hôtel</span>
+            </a>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Contact -->
+        {% if pg_info %}
+        <div id="contact-info" style="margin-top:24px;background:#fff;border:1px solid var(--border-light);border-radius:12px;padding:20px 24px">
+          <h5 style="font-family:var(--font-serif);font-size:1.1rem;color:var(--dark);margin:0 0 14px">Nous contacter</h5>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <div style="display:flex;align-items:center;gap:10px;font-size:.85rem;color:#555">
+                <i class="fas fa-phone" style="color:var(--gold);width:16px"></i>
+                <a href="tel:{{ pg_info.phone }}" style="color:var(--dark);text-decoration:none;font-weight:500">{{ pg_info.phone }}</a>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div style="display:flex;align-items:center;gap:10px;font-size:.85rem;color:#555">
+                <i class="fas fa-envelope" style="color:var(--gold);width:16px"></i>
+                <a href="mailto:{{ pg_info.email }}" style="color:var(--dark);text-decoration:none;font-weight:500">{{ pg_info.email }}</a>
+              </div>
+            </div>
+            {% if pg_info.whatsapp_number %}
+            <div class="col-md-4">
+              <div style="display:flex;align-items:center;gap:10px;font-size:.85rem;color:#555">
+                <i class="fab fa-whatsapp" style="color:var(--gold);width:16px"></i>
+                <a href="https://wa.me/{{ pg_info.whatsapp_number }}" target="_blank" style="color:var(--dark);text-decoration:none;font-weight:500">WhatsApp</a>
+              </div>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

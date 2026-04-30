@@ -1,0 +1,80 @@
+<div class="modal-body">
+  <div class="row g-3">
+    <div class="col-12">
+      <label class="form-label">Titre <span style="color:#EF4444">*</span></label>
+      <input type="text" name="title" class="form-control" required placeholder="Ex: Offre Lune de Miel">
+    </div>
+    <div class="col-12">
+      <label class="form-label">Sous-titre</label>
+      <input type="text" name="subtitle" class="form-control" placeholder="Ex: Séjour romantique en Suite Royale">
+    </div>
+    <div class="col-12">
+      <label class="form-label">Description <span style="color:#EF4444">*</span></label>
+      <textarea name="description" class="form-control" rows="3" required placeholder="Détaillez votre offre..."></textarea>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Badge</label>
+      <select name="badge" class="form-select">
+        {% for val, lbl in badge_choices %}
+        <option value="{{ val }}">{{ lbl }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Réduction (%)</label>
+      <input type="number" name="discount_pct" class="form-control" min="0" max="100" value="0" placeholder="0">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Ordre</label>
+      <input type="number" name="order" class="form-control" min="0" value="0">
+    </div>
+    <div class="col-12">
+      <label class="form-label">Label réduction</label>
+      <input type="text" name="discount_label" class="form-control" placeholder="Ex: -20% + Champagne offert">
+    </div>
+    <div class="col-12">
+      <label class="form-label">Chambre liée (optionnel)</label>
+      <select name="room" class="form-select">
+        <option value="">— Aucune chambre spécifique —</option>
+        {% for r in rooms %}
+        <option value="{{ r.id }}">{{ r.name }} ({{ r.price|floatformat:0 }} MAD/nuit)</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-12">
+      <label class="form-label">Texte du bouton</label>
+      <input type="text" name="cta_text" class="form-control" value="En profiter" placeholder="En profiter">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Valable du</label>
+      <input type="date" name="valid_from" class="form-control">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Valable jusqu'au</label>
+      <input type="date" name="valid_until" class="form-control">
+    </div>
+    <div class="col-12">
+      <label class="form-label">URL image</label>
+      <input type="url" name="image_url" class="form-control" placeholder="https://images.unsplash.com/..." id="ap_img" oninput="prevImg('ap_prev',this.value)">
+    </div>
+    <div class="col-12">
+      <label class="form-label">Upload image</label>
+      <input type="file" name="image_file" class="form-control" accept="image/*" onchange="prevFile('ap_prev',this)">
+    </div>
+    <div id="ap_prev_wrap" style="display:none" class="col-12">
+      <img id="ap_prev" style="width:100%;height:140px;object-fit:cover;border-radius:8px;border:2px solid #C9A96E">
+    </div>
+    <div class="col-6">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.85rem;padding:10px;background:#F9FAFB;border-radius:8px;border:1px solid #E5E7EB">
+        <input type="checkbox" name="is_active" checked style="width:16px;height:16px;accent-color:#10B981">
+        Promotion active
+      </label>
+    </div>
+    <div class="col-6">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.85rem;padding:10px;background:#F9FAFB;border-radius:8px;border:1px solid #E5E7EB">
+        <input type="checkbox" name="is_featured" checked style="width:16px;height:16px;accent-color:#C9A96E">
+        Afficher sur l'accueil
+      </label>
+    </div>
+  </div>
+</div>

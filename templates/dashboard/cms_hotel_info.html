@@ -1,0 +1,208 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}Infos Hôtel{% endblock %}
+{% block page_title %}Informations de l'Hôtel{% endblock %}
+{% block page_subtitle %}Tous les contenus et images modifiables{% endblock %}
+{% block topbar_actions %}
+<a href="{% url 'home' %}" target="_blank" class="topbar-btn">
+  <i class="fas fa-eye me-1"></i> Voir le site
+</a>
+{% endblock %}
+
+{% block content %}
+<form method="post" enctype="multipart/form-data" id="hotelForm">
+{% csrf_token %}
+<div class="row g-4">
+<div class="col-lg-8">
+
+  <!-- Identité -->
+  <div class="form-card mb-4">
+    <div class="form-section-title" style="font-size:.75rem;font-weight:600;color:#6B7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:16px;display:flex;align-items:center;gap:8px">
+      <i class="fas fa-hotel" style="color:#C9A96E"></i> Identité de l'hôtel
+      <span style="flex:1;height:1px;background:#F3F4F6;display:block"></span>
+    </div>
+    <div class="row g-3">
+      <div class="col-md-6"><label class="form-label">Nom de l'hôtel</label><input type="text" name="hotel_name" class="form-control" value="{{ info.hotel_name }}"></div>
+      <div class="col-md-6"><label class="form-label">Accroche (tagline)</label><input type="text" name="tagline" class="form-control" value="{{ info.tagline }}"></div>
+      <div class="col-md-4"><label class="form-label">Étoiles</label><input type="number" name="stars" class="form-control" value="{{ info.stars }}" min="1" max="5"></div>
+      <div class="col-md-4"><label class="form-label">Chambres totales</label><input type="number" name="total_rooms" class="form-control" value="{{ info.total_rooms }}"></div>
+      <div class="col-md-4"><label class="form-label">% Satisfaction</label><input type="number" name="satisfaction_rate" class="form-control" value="{{ info.satisfaction_rate }}"></div>
+      <div class="col-md-4"><label class="form-label">Fondé en</label><input type="number" name="founded_year" class="form-control" value="{{ info.founded_year }}"></div>
+      <div class="col-md-4">
+        <label class="form-label">Ans d'excellence <span style="color:#9CA3AF;font-size:.75rem">(auto si vide)</span></label>
+        <input type="number" name="years_excellence" class="form-control" value="{% if info.years_excellence %}{{ info.years_excellence }}{% endif %}" placeholder="Calculé auto depuis l'année de fondation">
+        <div class="form-text">Laissez vide → calculé automatiquement ({{ years_excellence }} ans)</div>
+      </div>
+      <div class="col-md-4"><label class="form-label">Check-in à partir de</label><input type="text" name="checkin_time" class="form-control" value="{{ info.checkin_time }}" placeholder="14h00"></div>
+      <div class="col-md-4"><label class="form-label">Check-out avant</label><input type="text" name="checkout_time" class="form-control" value="{{ info.checkout_time }}" placeholder="12h00"></div>
+    </div>
+  </div>
+
+  <!-- Contact -->
+  <div class="form-card mb-4">
+    <div class="form-section-title" style="font-size:.75rem;font-weight:600;color:#6B7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:16px;display:flex;align-items:center;gap:8px">
+      <i class="fas fa-address-card" style="color:#C9A96E"></i> Contact & Adresse
+      <span style="flex:1;height:1px;background:#F3F4F6;display:block"></span>
+    </div>
+    <div class="row g-3">
+      <div class="col-12"><label class="form-label">Adresse</label><input type="text" name="address" class="form-control" value="{{ info.address }}"></div>
+      <div class="col-md-6"><label class="form-label">Téléphone</label><input type="text" name="phone" class="form-control" value="{{ info.phone }}"></div>
+      <div class="col-md-6"><label class="form-label">Email</label><input type="email" name="email" class="form-control" value="{{ info.email }}"></div>
+    </div>
+  </div>
+
+  <!-- About section -->
+  <div class="form-card mb-4">
+    <div class="form-section-title" style="font-size:.75rem;font-weight:600;color:#6B7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:16px;display:flex;align-items:center;gap:8px">
+      <i class="fas fa-align-left" style="color:#C9A96E"></i> Section "À Propos"
+      <span style="flex:1;height:1px;background:#F3F4F6;display:block"></span>
+    </div>
+    <div class="row g-3">
+      <div class="col-12"><label class="form-label">Titre</label><input type="text" name="about_title" class="form-control" value="{{ info.about_title }}"></div>
+      <div class="col-12"><label class="form-label">Texte 1</label><textarea name="about_text1" class="form-control" rows="3">{{ info.about_text1 }}</textarea></div>
+      <div class="col-12"><label class="form-label">Texte 2 <span style="color:#9CA3AF;font-size:.78rem">(optionnel)</span></label><textarea name="about_text2" class="form-control" rows="3">{{ info.about_text2 }}</textarea></div>
+
+      <!-- Main about image -->
+      <div class="col-md-6">
+        <label class="form-label">Grande image <span style="color:#9CA3AF;font-size:.75rem">(principale)</span></label>
+        {% if info.get_about_image %}
+        <img src="{{ info.get_about_image }}" style="width:100%;height:80px;object-fit:cover;border-radius:6px;margin-bottom:6px">
+        {% endif %}
+        <input type="url" name="about_image_url" class="form-control form-control-sm mb-2" value="{{ info.about_image_url }}" placeholder="URL image principale">
+        <input type="file" name="about_image_file" class="form-control form-control-sm" accept="image/*">
+      </div>
+
+      <!-- Accent (small overlay) image -->
+      <div class="col-md-6">
+        <label class="form-label">
+          <i class="fas fa-star" style="color:#C9A96E;font-size:.75rem"></i>
+          Petite image superposée
+          <span style="background:#FEF3C7;color:#92400E;font-size:.65rem;padding:2px 8px;border-radius:20px;margin-left:4px">C'est celle-ci que vous cherchez</span>
+        </label>
+        {% if info.get_about_accent_image %}
+        <img src="{{ info.get_about_accent_image }}" style="width:100%;height:80px;object-fit:cover;border-radius:6px;margin-bottom:6px;border:2px solid #C9A96E">
+        {% endif %}
+        <input type="url" name="about_image_accent_url" class="form-control form-control-sm mb-2"
+          value="{{ info.about_image_accent_url }}"
+          placeholder="URL de la petite image overlay"
+          oninput="prevAccent(this.value)">
+        <input type="file" name="about_image_accent_file" class="form-control form-control-sm" accept="image/*">
+        <div id="accent_prev_wrap" style="display:none;margin-top:6px">
+          <img id="accent_prev" style="width:100%;height:70px;object-fit:cover;border-radius:6px;border:2px solid #C9A96E">
+        </div>
+        <div class="form-text">Cette image apparaît superposée en bas à droite de la grande image.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4 Features -->
+  <div class="form-card mb-4">
+    <div class="form-section-title" style="font-size:.75rem;font-weight:600;color:#6B7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:16px;display:flex;align-items:center;gap:8px">
+      <i class="fas fa-list-check" style="color:#C9A96E"></i> 4 Points forts (section À Propos)
+      <span style="flex:1;height:1px;background:#F3F4F6;display:block"></span>
+    </div>
+    <div class="row g-3">
+      {% for n, icon_val, text_val in feature_items %}
+      <div class="col-md-6">
+        <div style="background:#F9FAFB;border:1px solid #E5E7EB;border-radius:10px;padding:12px">
+          <div style="font-size:.75rem;font-weight:600;color:#374151;margin-bottom:8px">Point fort {{ n }}</div>
+          <div class="row g-2">
+            <div class="col-5">
+              <label class="form-label" style="font-size:.72rem">Icône FontAwesome</label>
+              <input type="text" name="feature_{{ n }}_icon" class="form-control form-control-sm" value="{{ icon_val }}" placeholder="fas fa-leaf">
+            </div>
+            <div class="col-7">
+              <label class="form-label" style="font-size:.72rem">Texte</label>
+              <input type="text" name="feature_{{ n }}_text" class="form-control form-control-sm" value="{{ text_val }}" placeholder="Ex: Piscine olympique">
+            </div>
+          </div>
+          <div style="margin-top:6px;font-size:.7rem;color:#9CA3AF">
+            Aperçu : <i class="{{ icon_val }}" style="color:#C9A96E"></i> {{ text_val }}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Hero backgrounds -->
+  <div class="form-card mb-4">
+    <div class="form-section-title" style="font-size:.75rem;font-weight:600;color:#6B7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:16px;display:flex;align-items:center;gap:8px">
+      <i class="fas fa-images" style="color:#C9A96E"></i> Images de fond (pages du site)
+      <span style="flex:1;height:1px;background:#F3F4F6;display:block"></span>
+    </div>
+    <div class="row g-3">
+      {% for label, field_name, current_val in hero_images %}
+      <div class="col-12">
+        <label class="form-label" style="font-size:.82rem">{{ label }}</label>
+        <div style="display:flex;gap:10px;align-items:center">
+          {% if current_val %}
+          <img src="{{ current_val }}" style="width:80px;height:48px;object-fit:cover;border-radius:6px;flex-shrink:0;border:1px solid #E5E7EB">
+          {% endif %}
+          <input type="url" name="{{ field_name }}" class="form-control form-control-sm" value="{{ current_val }}" placeholder="https://images.unsplash.com/...">
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Social media -->
+  <div class="form-card mb-4">
+    <div class="form-section-title" style="font-size:.75rem;font-weight:600;color:#6B7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:16px;display:flex;align-items:center;gap:8px">
+      <i class="fas fa-share-alt" style="color:#C9A96E"></i> Réseaux sociaux
+      <span style="flex:1;height:1px;background:#F3F4F6;display:block"></span>
+    </div>
+    <div class="row g-3">
+      <div class="col-md-4"><label class="form-label"><i class="fab fa-facebook me-1" style="color:#1877F2"></i>Facebook</label><input type="url" name="facebook_url" class="form-control" value="{{ info.facebook_url }}" placeholder="https://facebook.com/..."></div>
+      <div class="col-md-4"><label class="form-label"><i class="fab fa-instagram me-1" style="color:#E1306C"></i>Instagram</label><input type="url" name="instagram_url" class="form-control" value="{{ info.instagram_url }}" placeholder="https://instagram.com/..."></div>
+      <div class="col-md-4"><label class="form-label"><i class="fab fa-whatsapp me-1" style="color:#25D366"></i>WhatsApp</label><input type="text" name="whatsapp_number" class="form-control" value="{{ info.whatsapp_number }}" placeholder="+212600000000"></div>
+      <div class="col-md-12"><label class="form-label"><i class="fas fa-map-marker-alt me-1" style="color:#EA4335"></i>Google Maps URL <small class="text-muted">(lien vers la localisation)</small></label><input type="url" name="google_maps_url" class="form-control" value="{{ info.google_maps_url }}" placeholder="https://maps.google.com/?q=..."><div class="form-text">Ouvrez Google Maps, recherchez votre hôtel, cliquez "Partager" → copiez le lien ici.</div></div>
+    </div>
+  </div>
+
+  <button type="submit" class="btn-gold px-5 py-2">
+    <i class="fas fa-save me-2"></i>Enregistrer toutes les modifications
+  </button>
+
+</div>
+
+<!-- Right: live preview card -->
+<div class="col-lg-4">
+  <div class="data-card" style="position:sticky;top:90px">
+    <div class="data-card-header"><div class="data-card-title"><i class="fas fa-eye"></i> Aperçu — Section À Propos</div></div>
+    <div style="padding:16px">
+      <div style="position:relative;border-radius:10px;overflow:hidden;margin-bottom:12px">
+        <img id="prev_main" src="{{ info.get_about_image }}" style="width:100%;height:150px;object-fit:cover;display:block">
+        <img id="prev_accent" src="{{ info.get_about_accent_image }}"
+          style="position:absolute;bottom:10px;right:10px;width:80px;height:65px;object-fit:cover;border-radius:6px;border:3px solid #fff;box-shadow:0 4px 12px rgba(0,0,0,.25)">
+      </div>
+      <p style="font-size:.75rem;color:#9CA3AF;text-align:center">La petite image s'affiche en superposition</p>
+
+      <div style="border-top:1px solid #F3F4F6;padding-top:12px;margin-top:4px">
+        <div style="font-size:.72rem;font-weight:600;color:#9CA3AF;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Points forts</div>
+        {% for n, icon_val, text_val in feature_items %}
+        <div style="display:flex;align-items:center;gap:8px;font-size:.8rem;color:#374151;padding:4px 0">
+          <i class="{{ icon_val }}" style="color:#C9A96E;width:14px;text-align:center"></i> {{ text_val }}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function prevAccent(url) {
+  const w = document.getElementById('accent_prev_wrap');
+  const img = document.getElementById('accent_prev');
+  const prev = document.getElementById('prev_accent');
+  if (url) {
+    img.src = url; prev.src = url;
+    w.style.display = 'block';
+  } else w.style.display = 'none';
+}
+</script>
+{% endblock %}
